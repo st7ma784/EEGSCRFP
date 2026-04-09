@@ -1,121 +1,94 @@
-"""Project pathway features to EEG-like signals."""
+"""Project pathway features to EEG-like signals.
+
+GPU-friendly design notes
+--------------------------
+* The smoothing convolution kernel is a ``registered_buffer`` — allocated
+  once at construction, never re-created in ``forward()``.
+* Noise injection and smoothing are dispatched to bound methods at
+  construction time so ``forward()`` contains no if-statements.
+* The ``training`` boolean parameter has been removed; ``self.training``
+  (set by ``model.train()`` / ``model.eval()``) is used instead.
+"""
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from typing import Optional
 
 
 class EEGProjector(nn.Module):
-    """Project pathway features to EEG-like output."""
-    
+
     def __init__(
         self,
-        input_dim: int = 6,  # 6 pathway metrics
-        output_channels: int = 105,  # Standard EEG channel count
+        input_dim: int = 6,
+        output_channels: int = 105,
         add_noise: bool = True,
         noise_std: float = 0.1,
         smoothing_window: Optional[int] = None,
     ):
-        """
-        Initialize EEG projector.
-        
-        Args:
-            input_dim: Number of input pathway features
-            output_channels: Number of EEG channels
-            add_noise: Whether to add Gaussian noise
-            noise_std: Standard deviation of noise
-            smoothing_window: Optional smoothing window size
-        """
         super().__init__()
-        
         self.input_dim = input_dim
         self.output_channels = output_channels
-        self.add_noise = add_noise
         self.noise_std = noise_std
-        self.smoothing_window = smoothing_window
-        
-        # Linear projection: pathway_metrics -> EEG_channels
+
         self.projection = nn.Linear(input_dim, output_channels, bias=True)
-        
-        # Initialize with Xavier initialization
         nn.init.xavier_uniform_(self.projection.weight)
         nn.init.zeros_(self.projection.bias)
-    
-    def forward(self, pathway_features: torch.Tensor, training: bool = True) -> torch.Tensor:
+
+        # Register smoothing kernel as buffer (moves with .to(device) / .cuda())
+        if smoothing_window is not None and smoothing_window > 1:
+            kernel = torch.ones(output_channels, 1, smoothing_window) / smoothing_window
+            self.register_buffer("smoothing_kernel", kernel)
+            self._pad = smoothing_window // 2
+        else:
+            self.register_buffer("smoothing_kernel", None)
+            self._pad = 0
+
+        # Resolve noise and smoothing behaviour at construction time
+        # so forward() is branch-free.
+        self._noise_fn = self._add_noise if add_noise else self._identity
+        self._smooth_fn = self._apply_smoothing if (smoothing_window and smoothing_window > 1) else self._identity
+
+    # ------------------------------------------------------------------
+    # Component methods — selected once at init, never branched in forward
+    # ------------------------------------------------------------------
+
+    def _identity(self, x: torch.Tensor) -> torch.Tensor:
+        return x
+
+    def _add_noise(self, x: torch.Tensor) -> torch.Tensor:
+        """Add Gaussian noise only during training (uses self.training)."""
+        if self.training:
+            return x + torch.randn_like(x) * self.noise_std
+        return x
+
+    def _apply_smoothing(self, x: torch.Tensor) -> torch.Tensor:
+        """Per-channel moving-average using the pre-allocated buffer kernel."""
+        # x: [B, C] — treat channels as a 1-D temporal axis of length 1
+        # Reshape to [B, C, 1] for conv1d with groups=C
+        x = x.unsqueeze(-1)                                    # [B, C, 1]
+        x = F.pad(x, (self._pad, self._pad))                   # [B, C, 1+2*pad]
+        x = F.conv1d(x, self.smoothing_kernel, groups=self.output_channels)
+        return x.squeeze(-1)                                   # [B, C]
+
+    # ------------------------------------------------------------------
+    # Forward — no if-statements
+    # ------------------------------------------------------------------
+
+    def forward(self, pathway_features: torch.Tensor) -> torch.Tensor:
         """
-        Project pathway features to EEG signals.
-        
         Args:
-            pathway_features: [batch_size, input_dim]
-            training: Whether in training mode (controls noise injection)
-            
+            pathway_features: [B, input_dim]
         Returns:
-            EEG signals [batch_size, output_channels]
+            [B, output_channels]
         """
-        # Linear projection
-        eeg_signal = self.projection(pathway_features)  # [batch, channels]
-        
-        # Add noise during training
-        if self.add_noise and training:
-            noise = torch.randn_like(eeg_signal) * self.noise_std
-            eeg_signal = eeg_signal + noise
-        
-        # Optional smoothing (temporal smoothing across simulated time)
-        if self.smoothing_window is not None and self.smoothing_window > 1:
-            eeg_signal = self._apply_smoothing(eeg_signal)
-        
-        return eeg_signal
-    
-    def _apply_smoothing(self, signal: torch.Tensor) -> torch.Tensor:
-        """
-        Apply temporal smoothing to EEG signal.
-        
-        Args:
-            signal: [batch_size, channels]
-            
-        Returns:
-            Smoothed signal [batch_size, channels]
-        """
-        # Simple moving average smoothing
-        # Treat as if we have a temporal dimension
-        window = self.smoothing_window
-        if window is None or window < 2:
-            return signal
-        
-        # Add temporal dimension for convolution
-        signal = signal.unsqueeze(1)  # [batch, 1, channels]
-        signal = signal.transpose(1, 2)  # [batch, channels, 1]
-        
-        # Apply 1D convolution for smoothing
-        kernel = torch.ones(self.output_channels, 1, window) / window
-        kernel = kernel.to(signal.device)
-        
-        # Pad input
-        signal_padded = torch.nn.functional.pad(signal, (window // 2, window // 2))
-        
-        # Apply convolution per channel
-        smoothed = torch.nn.functional.conv1d(
-            signal_padded,
-            kernel,
-            groups=self.output_channels
-        )
-        
-        return smoothed.squeeze(-1)  # [batch, channels]
+        x = self.projection(pathway_features)
+        x = self._noise_fn(x)
+        x = self._smooth_fn(x)
+        return x
 
 
 def project_to_eeg(
     pathway_features: torch.Tensor,
     projector: EEGProjector,
-    training: bool = True,
 ) -> torch.Tensor:
-    """
-    Convenience function to project pathway features to EEG.
-    
-    Args:
-        pathway_features: [batch_size, num_features]
-        projector: EEGProjector instance
-        training: Whether in training mode
-        
-    Returns:
-        EEG signals [batch_size, num_channels]
-    """
-    return projector(pathway_features, training=training)
+    return projector(pathway_features)

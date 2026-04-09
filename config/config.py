@@ -33,7 +33,11 @@ class DataConfig:
     sparsity_levels: List[float] = None
     batch_size: int = 8
     num_workers: int = 0
-    
+    # When set, load real task prompts and vividness ratings from narrative CSVs
+    # instead of the built-in synthetic prompts.  Path should be the root data
+    # directory containing per-subject sub-directories (e.g. /data/EEG).
+    narrative_data_dir: Optional[str] = None
+
     def __post_init__(self):
         if self.sparsity_levels is None:
             self.sparsity_levels = [0.1, 0.3, 0.5, 0.7, 0.9]

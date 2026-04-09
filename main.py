@@ -11,6 +11,12 @@ import logging
 from config.config import get_default_config, Config
 from src.data.dataset import create_dataloader, create_default_prompts
 from src.data.tokenizer import get_collate_fn
+from src.data.narrative_loader import (
+    NarrativeSparsityDataset,
+    create_narrative_dataloader,
+    load_narrative_records,
+    vividness_to_sparsity,
+)
 from src.lightning_module import create_lightning_module
 from experiments.runner import run_all_experiments
 
@@ -27,67 +33,72 @@ def setup_logger():
 def create_dataloaders(config: Config, batch_size: int = None):
     """
     Create train and validation dataloaders.
-    
+
+    When ``config.data.narrative_data_dir`` is set, loads real task prompts
+    and per-trial vividness-derived sparsity levels from the narrative CSVs.
+    Otherwise falls back to the built-in synthetic prompts.
+
     Args:
         config: Configuration object
         batch_size: Override batch size if provided
-        
+
     Returns:
         Tuple of (train_loader, val_loader)
     """
     if batch_size is None:
         batch_size = config.data.batch_size
-    
-    # Create dataset
-    prompts = create_default_prompts(config.data.num_prompts)
-    dataloader = create_dataloader(
-        prompts=prompts,
-        sparsity_levels=config.data.sparsity_levels,
-        samples_per_sparsity=config.data.num_samples_per_sparsity,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=config.data.num_workers,
-    )
-    
-    # Get collate function
+
     collate_fn = get_collate_fn(
         model_name=config.model.model_name,
         max_length=config.model.max_seq_length,
     )
-    
-    # Convert to use tokenized collate
-    from src.data.dataset import SparsityDataset
-    dataset = SparsityDataset(
-        prompts=prompts,
-        sparsity_levels=config.data.sparsity_levels,
-        samples_per_sparsity=config.data.num_samples_per_sparsity,
-    )
-    
+
+    if config.data.narrative_data_dir:
+        # --- Real narrative data: prompts + vividness-derived sparsity ---
+        dataset = NarrativeSparsityDataset(config.data.narrative_data_dir)
+    else:
+        # --- Synthetic fallback: fixed prompts × sparsity grid ---
+        from src.data.dataset import SparsityDataset
+        prompts = create_default_prompts(config.data.num_prompts)
+        dataset = SparsityDataset(
+            prompts=prompts,
+            sparsity_levels=config.data.sparsity_levels,
+            samples_per_sparsity=config.data.num_samples_per_sparsity,
+        )
+
     # Split into train/val
     train_size = int(len(dataset) * (1 - config.training.val_split))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(
         dataset,
         [train_size, val_size],
-        generator=torch.Generator().manual_seed(config.training.seed)
+        generator=torch.Generator().manual_seed(config.training.seed),
     )
-    
+
+    use_gpu = torch.cuda.is_available()
+    nw = config.data.num_workers
+    loader_kwargs = dict(
+        collate_fn=collate_fn,
+        num_workers=nw,
+        pin_memory=use_gpu,
+        persistent_workers=(nw > 0),
+        prefetch_factor=2 if nw > 0 else None,
+    )
+
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        collate_fn=collate_fn,
-        num_workers=config.data.num_workers,
+        **loader_kwargs,
     )
-    
+
     val_loader = DataLoader(
         val_dataset,
         batch_size=batch_size,
         shuffle=False,
-        collate_fn=collate_fn,
-        num_workers=config.data.num_workers,
+        **loader_kwargs,
     )
-    
+
     return train_loader, val_loader
 
 
@@ -190,29 +201,47 @@ def evaluate_and_run_experiments(
 ):
     """
     Evaluate trained module and run final experiments.
-    
+
+    When ``config.data.narrative_data_dir`` is set, the experiment runner
+    uses the actual task prompts and their per-trial vividness-derived
+    sparsity levels.  Otherwise it falls back to the built-in synthetic
+    prompts with the configured sparsity grid.
+
     Args:
         lightning_module: Trained Lightning module
         config: Configuration object
     """
     logger = setup_logger()
     logger.info("Running final experiments...")
-    
+
     # Extract component models
     sparse_model = lightning_module.sparse_model
     eeg_projector = lightning_module.eeg_projector
     pathway_predictor = lightning_module.pathway_predictor
     eeg_predictor = lightning_module.eeg_predictor
-    
+
+    # Resolve prompts and per-sample sparsity for experiments
+    if config.data.narrative_data_dir:
+        logger.info(
+            f"Loading narrative prompts from '{config.data.narrative_data_dir}' "
+            "for experiment evaluation..."
+        )
+        prompts, raw_vividness = load_narrative_records(config.data.narrative_data_dir)
+        experiment_sparsity = vividness_to_sparsity(raw_vividness)
+    else:
+        prompts = None          # runner will use create_default_prompts
+        experiment_sparsity = config.data.sparsity_levels
+
     # Run experiments
     results = run_all_experiments(
         sparse_model=sparse_model,
         eeg_projector=eeg_projector,
         pathway_predictor=pathway_predictor,
         eeg_predictor=eeg_predictor,
-        sparsity_levels=config.data.sparsity_levels,
+        sparsity_levels=experiment_sparsity,
         num_prompts=config.data.num_prompts,
         results_dir=config.results_dir,
+        prompts=prompts,
     )
     
     # Print summary
@@ -281,9 +310,20 @@ def main():
         action='store_true',
         help="Skip training and only run experiments"
     )
-    
+    parser.add_argument(
+        "--data-dir",
+        type=str,
+        default=None,
+        help=(
+            "Path to the narrative EEG data directory containing per-subject "
+            "sub-directories with *_trialinfo[_aligned].csv files.  When set, "
+            "real task prompts and vividness-derived sparsity levels are used "
+            "instead of the built-in synthetic prompts."
+        ),
+    )
+
     args = parser.parse_args()
-    
+
     # Get config
     config = get_default_config()
     config.training.max_epochs = args.epochs
@@ -291,6 +331,8 @@ def main():
     config.training.learning_rate = args.learning_rate
     config.model.model_name = args.model_name
     config.data.num_prompts = args.num_prompts
+    if args.data_dir:
+        config.data.narrative_data_dir = args.data_dir
     
     if args.skip_training:
         # Just run experiments (assumes models are already trained)

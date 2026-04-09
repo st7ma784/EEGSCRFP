@@ -1,270 +1,140 @@
-"""Compute pathway metrics from attention maps."""
+"""Compute pathway metrics from attention maps — fully vectorised, batch-aware.
+
+All public functions accept a stacked attention tensor [L, B, H, S, S] and
+return a per-sample vector [B], so the entire batch is processed in one CUDA
+kernel dispatch.  No Python loops, no NumPy, no scipy.
+"""
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Tuple
-import numpy as np
-from scipy.special import entr
-from scipy.stats import entropy
+from typing import List
+
+_EPS = 1e-10
 
 
-class PathwayMetricsComputer:
-    """Compute routing/pathway metrics from attention weights."""
-    
-    def __init__(self):
-        pass
-    
-    @staticmethod
-    def routing_sparsity(attention_maps: List[torch.Tensor]) -> float:
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _stack(attention_maps: List[torch.Tensor]) -> torch.Tensor:
+    """List of L tensors [B, H, S, S] → stacked [L, B, H, S, S]."""
+    return torch.stack(attention_maps, dim=0)
+
+
+def _per_sample_flat(stacked: torch.Tensor) -> torch.Tensor:
+    """[L, B, H, S, S] → [B, L*H*S*S] — all attention weights per sample."""
+    L, B, H, S, _ = stacked.shape
+    return stacked.permute(1, 0, 2, 3, 4).reshape(B, L * H * S * S)
+
+
+# ---------------------------------------------------------------------------
+# Per-metric functions — each returns [B]
+# ---------------------------------------------------------------------------
+
+def routing_sparsity(stacked: torch.Tensor) -> torch.Tensor:
+    """Rényi-2 diversity of attention weights — lower = more sparse. [B]"""
+    flat = _per_sample_flat(stacked).clamp(min=0)          # [B, N]
+    flat = flat * (flat > 1e-5)                             # zero near-zero
+    probs = flat / flat.sum(dim=-1, keepdim=True).clamp(min=_EPS)
+    renyi = -torch.log(probs.pow(2).sum(dim=-1) + _EPS)    # [B]
+    return renyi.exp()
+
+
+def path_competition_index(stacked: torch.Tensor) -> torch.Tensor:
+    """max / mean of non-zero weights — higher = more winner-take-all. [B]"""
+    flat = _per_sample_flat(stacked).clamp(min=0)           # [B, N]
+    mask = (flat > 1e-5).float()
+    max_vals = flat.max(dim=-1).values                      # [B]
+    counts = mask.sum(dim=-1).clamp(min=1)
+    mean_vals = (flat * mask).sum(dim=-1) / counts          # [B]
+    return max_vals / (mean_vals + _EPS)
+
+
+def path_efficiency(stacked: torch.Tensor, topk_percent: float = 0.2) -> torch.Tensor:
+    """Energy fraction in top-k% weights — higher = more concentrated. [B]"""
+    flat = _per_sample_flat(stacked).clamp(min=0)           # [B, N]
+    k = max(1, int(flat.shape[-1] * topk_percent))
+    topk_sum = torch.topk(flat, k=k, dim=-1).values.sum(dim=-1)   # [B]
+    total = flat.sum(dim=-1).clamp(min=_EPS)                       # [B]
+    return topk_sum / total
+
+
+def routing_entropy(stacked: torch.Tensor) -> torch.Tensor:
+    """Mean Shannon entropy over all per-position attention rows. [B]"""
+    L, B, H, S, _ = stacked.shape
+    # [L*B*H*S, S] — each row is one attention distribution over S keys
+    rows = stacked.permute(1, 0, 2, 3, 4).reshape(B * L * H * S, S)
+    probs = rows / rows.sum(dim=-1, keepdim=True).clamp(min=_EPS)
+    h = -(probs * torch.log(probs + _EPS)).sum(dim=-1)      # [B*L*H*S]
+    return h.reshape(B, L * H * S).mean(dim=-1)             # [B]
+
+
+def inter_head_divergence(stacked: torch.Tensor) -> torch.Tensor:
+    """Mean pairwise KL divergence between attention heads. [B]"""
+    L, B, H, S, _ = stacked.shape
+    if H < 2:
+        return stacked.new_zeros(B)
+
+    lb_h_ss = stacked.reshape(L * B, H, S * S)             # [LB, H, S*S]
+    p = lb_h_ss / lb_h_ss.sum(dim=-1, keepdim=True).clamp(min=_EPS)
+    log_p = torch.log(p + _EPS)                            # [LB, H, S*S]
+
+    # KL(p_i || p_j) = Σ_k p_ik (log p_ik - log p_jk)
+    # = (p * log_p).sum(-1)_i  -  (p_i @ log_p_j^T).sum(-1)
+    self_term = (p * log_p).sum(dim=-1)                     # [LB, H]
+    cross = torch.bmm(p, log_p.transpose(1, 2))            # [LB, H, H]
+    kl = self_term.unsqueeze(2) - cross                     # [LB, H, H]  KL[i,j]
+
+    # Upper-triangle mask (exclude diagonal)
+    mask = torch.triu(torch.ones(H, H, device=stacked.device, dtype=torch.bool), diagonal=1)
+    kl_per_lb = kl[:, mask].mean(dim=-1)                    # [LB]
+    return kl_per_lb.reshape(L, B).mean(dim=0)             # [B]
+
+
+def layer_stability(stacked: torch.Tensor) -> torch.Tensor:
+    """Mean cosine similarity between consecutive layer attention maps. [B]"""
+    L, B, H, S, _ = stacked.shape
+    if L < 2:
+        return stacked.new_ones(B)
+
+    flat = stacked.reshape(L, B, H * S * S)                # [L, B, H*S*S]
+    # Batch cosine similarity over L-1 consecutive pairs
+    cos = F.cosine_similarity(flat[:-1], flat[1:], dim=-1)  # [L-1, B]
+    return cos.mean(dim=0)                                  # [B]
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+class PathwayMetricsComputer(nn.Module):
+    """Stateless nn.Module wrapper — moves to GPU with the parent module."""
+
+    def forward(self, attention_maps: List[torch.Tensor]) -> torch.Tensor:
         """
-        Compute effective number of active paths (routing sparsity).
-        
-        Uses the Leinster-Cobbold diversity index on attention weights.
-        High value = more distributed (less sparse), Low value = concentrated (sparse)
-        
         Args:
-            attention_maps: List of attention tensors, shape [batch, heads, seq_len, seq_len]
-            
+            attention_maps: list of L tensors, each [B, H, S, S]
         Returns:
-            Scalar measure of routing sparsity
+            [B, 6] pathway feature matrix
         """
-        all_attentions = []
-        for attn in attention_maps:
-            # Average over batch and sequence positions
-            # Shape: [batch, heads, seq_len, seq_len] -> [heads, seq_len, seq_len]
-            attn_mean = attn.mean(dim=0)  # Average over batch
-            all_attentions.append(attn_mean)
-        
-        # Flatten and compute effective number of active paths
-        all_flat = torch.cat([a.flatten() for a in all_attentions])
-        
-        # Remove near-zero values
-        all_flat = all_flat[all_flat > 1e-5]
-        
-        if len(all_flat) == 0:
-            return 0.0
-        
-        # Compute diversity (effective number of paths)
-        # Using Rényi entropy of order 2
-        probs = all_flat / all_flat.sum()
-        renyi_entropy = -torch.log(torch.sum(probs ** 2) + 1e-10)
-        effective_paths = torch.exp(renyi_entropy).item()
-        
-        return float(effective_paths)
-    
-    @staticmethod
-    def path_competition_index(attention_maps: List[torch.Tensor]) -> float:
-        """
-        Compute path competition index: max(attention) / mean(attention).
-        
-        High = strong winner (sparse), Low = distributed (dense)
-        
-        Args:
-            attention_maps: List of attention tensors
-            
-        Returns:
-            Scalar competition index
-        """
-        max_vals = []
-        mean_vals = []
-        
-        for attn in attention_maps:
-            # Focus on non-zero attention values
-            attn_mean = attn.mean(dim=0)  # [heads, seq_len, seq_len]
-            attn_flat = attn_mean.flatten()
-            attn_flat = attn_flat[attn_flat > 1e-5]
-            
-            if len(attn_flat) > 0:
-                max_vals.append(attn_flat.max().item())
-                mean_vals.append(attn_flat.mean().item())
-        
-        if not max_vals or not mean_vals:
-            return 0.0
-        
-        avg_max = np.mean(max_vals)
-        avg_mean = np.mean(mean_vals)
-        
-        if avg_mean < 1e-8:
-            return 0.0
-        
-        competition = avg_max / avg_mean
-        return float(competition)
-    
-    @staticmethod
-    def path_efficiency(attention_maps: List[torch.Tensor], topk_percent: float = 0.2) -> float:
-        """
-        Compute path efficiency: energy concentration in top-k weights.
-        
-        Measure how much attention weight is concentrated in a small set of connections.
-        Higher = more concentrated = more sparse
-        
-        Args:
-            attention_maps: List of attention tensors
-            topk_percent: Fraction of top weights to consider (default 20%)
-            
-        Returns:
-            Scalar efficiency measure
-        """
-        efficiencies = []
-        
-        for attn in attention_maps:
-            attn_mean = attn.mean(dim=0)  # [heads, seq_len, seq_len]
-            attn_flat = attn_mean.flatten()
-            
-            if len(attn_flat) == 0:
-                continue
-            
-            # Get top-k values
-            k = max(1, int(len(attn_flat) * topk_percent))
-            topk_vals = torch.topk(attn_flat, k=k)[0]
-            
-            # Efficiency = mass in top-k / total mass
-            efficiency = topk_vals.sum().item() / attn_flat.sum().item()
-            efficiencies.append(efficiency)
-        
-        return float(np.mean(efficiencies)) if efficiencies else 0.0
-    
-    @staticmethod
-    def routing_entropy(attention_maps: List[torch.Tensor]) -> float:
-        """
-        Compute Shannon entropy of attention distributions.
-        
-        High = distributed (low sparsity), Low = concentrated (high sparsity)
-        
-        Args:
-            attention_maps: List of attention tensors
-            
-        Returns:
-            Scalar entropy value
-        """
-        entropies = []
-        
-        for attn in attention_maps:
-            attn_mean = attn.mean(dim=0)  # [heads, seq_len, seq_len]
-            
-            # Compute per-position entropies
-            for pos_attn in attn_mean:  # Iterate over sequences
-                for head_attn in pos_attn:  # Iterate over sequence positions
-                    if head_attn.sum() > 1e-8:
-                        probs = head_attn / head_attn.sum()
-                        probs = probs[probs > 1e-10]
-                        if len(probs) > 0:
-                            h = -torch.sum(probs * torch.log(probs + 1e-10)).item()
-                            entropies.append(h)
-        
-        return float(np.mean(entropies)) if entropies else 0.0
-    
-    @staticmethod
-    def inter_head_divergence(attention_maps: List[torch.Tensor]) -> float:
-        """
-        Compute KL divergence between attention heads (averaged over layers).
-        
-        High = heads diverge (different routes), Low = heads agree (similar routes)
-        
-        Args:
-            attention_maps: List of attention tensors [batch, heads, seq_len, seq_len]
-            
-        Returns:
-            Scalar divergence measure
-        """
-        divergences = []
-        
-        for attn in attention_maps:  # Per layer
-            attn_mean = attn.mean(dim=0)  # Average over batch: [heads, seq_len, seq_len]
-            num_heads = attn_mean.shape[0]
-            
-            if num_heads < 2:
-                continue
-            
-            # Compute pairwise KL divergences between heads
-            head_pairs = []
-            for i in range(num_heads):
-                for j in range(i + 1, num_heads):
-                    h1 = attn_mean[i].flatten()
-                    h2 = attn_mean[j].flatten()
-                    
-                    # Normalize
-                    p = h1 / (h1.sum() + 1e-10)
-                    q = h2 / (h2.sum() + 1e-10)
-                    
-                    # KL(p || q)
-                    kl = torch.sum(p * (torch.log(p + 1e-10) - torch.log(q + 1e-10))).item()
-                    head_pairs.append(kl)
-            
-            if head_pairs:
-                divergences.append(np.mean(head_pairs))
-        
-        return float(np.mean(divergences)) if divergences else 0.0
-    
-    @staticmethod
-    def layer_stability(attention_maps: List[torch.Tensor]) -> float:
-        """
-        Compute cosine similarity between consecutive layer attention maps.
-        
-        High = smooth transitions between layers, Low = abrupt changes
-        
-        Args:
-            attention_maps: List of attention tensors
-            
-        Returns:
-            Scalar stability measure
-        """
-        similarities = []
-        
-        for i in range(len(attention_maps) - 1):
-            attn_curr = attention_maps[i].mean(dim=0).flatten()  # [heads*seq*seq]
-            attn_next = attention_maps[i + 1].mean(dim=0).flatten()
-            
-            # Cosine similarity
-            cos_sim = F.cosine_similarity(
-                attn_curr.unsqueeze(0),
-                attn_next.unsqueeze(0)
-            ).item()
-            similarities.append(cos_sim)
-        
-        return float(np.mean(similarities)) if similarities else 0.0
-    
-    def compute_all_metrics(self, attention_maps: List[torch.Tensor]) -> Dict[str, float]:
-        """
-        Compute all pathway metrics.
-        
-        Args:
-            attention_maps: List of attention tensors from all layers
-            
-        Returns:
-            Dictionary with all metrics
-        """
-        metrics = {
-            'routing_sparsity': self.routing_sparsity(attention_maps),
-            'path_competition_index': self.path_competition_index(attention_maps),
-            'path_efficiency': self.path_efficiency(attention_maps),
-            'routing_entropy': self.routing_entropy(attention_maps),
-            'inter_head_divergence': self.inter_head_divergence(attention_maps),
-            'layer_stability': self.layer_stability(attention_maps),
-        }
-        return metrics
+        return compute_pathway_features(attention_maps)
 
 
 def compute_pathway_features(attention_maps: List[torch.Tensor]) -> torch.Tensor:
-    """
-    Compute pathway feature vector from attention maps.
-    
+    """Compute all 6 pathway metrics for a full batch in one pass.
+
     Args:
-        attention_maps: List of attention tensors from all layers
-        
+        attention_maps: list of L tensors, each [B, H, S, S]
+
     Returns:
-        Feature vector of shape [6] containing all metrics
+        [B, 6] float32 tensor on the same device as the inputs
     """
-    computer = PathwayMetricsComputer()
-    metrics = computer.compute_all_metrics(attention_maps)
-    
-    # Create feature vector in consistent order
-    feature_vector = torch.tensor([
-        metrics['routing_sparsity'],
-        metrics['path_competition_index'],
-        metrics['path_efficiency'],
-        metrics['routing_entropy'],
-        metrics['inter_head_divergence'],
-        metrics['layer_stability'],
-    ], dtype=torch.float32)
-    
-    return feature_vector
+    stacked = _stack(attention_maps)   # [L, B, H, S, S]
+    return torch.stack([
+        routing_sparsity(stacked),
+        path_competition_index(stacked),
+        path_efficiency(stacked),
+        routing_entropy(stacked),
+        inter_head_divergence(stacked),
+        layer_stability(stacked),
+    ], dim=-1)                         # [B, 6]

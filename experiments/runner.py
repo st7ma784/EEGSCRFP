@@ -1,7 +1,22 @@
-"""Experiments for testing the causal hypothesis."""
+"""Experiments for testing the causal hypothesis.
+
+GPU notes
+---------
+* ``run_batch()`` replaces ``run_single_level()``: it tokenises *all* prompts
+  (and all noise-repeats) into a single forward pass so every CUDA call is
+  maximally occupied.
+* In grid-experiment mode every prompt at the same sparsity level is
+  processed together — one forward pass per sparsity level instead of one
+  per (prompt × repeat).
+* In per-sample (vividness) mode each trial has a unique sparsity, so the
+  loop over trials is unavoidable, but each iteration is a full-batch
+  forward (batch = ``num_repeats`` copies of the single prompt).
+* No numpy in the hot path; all tensor ops stay on-device until final
+  result serialisation.
+"""
 import torch
 import numpy as np
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 from scipy.stats import pearsonr
 import json
 from pathlib import Path
@@ -16,7 +31,7 @@ from src.data.tokenizer import TextTokenizer
 
 class ExperimentRunner:
     """Runner for causal hypothesis experiments."""
-    
+
     def __init__(
         self,
         sparse_model: SparseAttentionWrapper,
@@ -25,260 +40,194 @@ class ExperimentRunner:
         eeg_predictor: MLPPredictor,
         sparsity_levels: List[float],
     ):
-        """
-        Initialize experiment runner.
-        
-        Args:
-            sparse_model: Sparse attention model
-            eeg_projector: EEG projector module
-            pathway_predictor: Pathway predictor MLP
-            eeg_predictor: EEG predictor MLP
-            sparsity_levels: List of sparsity levels to test
-        """
         self.sparse_model = sparse_model
         self.eeg_projector = eeg_projector
         self.pathway_predictor = pathway_predictor
         self.eeg_predictor = eeg_predictor
         self.sparsity_levels = sparsity_levels
-        
         self.device = next(sparse_model.parameters()).device
-    
-    def run_single_level(
+
+        # Pre-set all sub-modules to eval for inference
+        for m in (sparse_model, eeg_projector, pathway_predictor, eeg_predictor):
+            m.eval()
+
+    # ------------------------------------------------------------------
+    # Core batched forward
+    # ------------------------------------------------------------------
+
+    @torch.no_grad()
+    def run_batch(
         self,
-        prompt: str,
+        prompts: List[str],
         sparsity_level: float,
         tokenizer: TextTokenizer,
-        num_repeats: int = 3,
-    ) -> Dict[str, np.ndarray]:
-        """
-        Run single sparsity level experiment.
-        
+        num_repeats: int = 1,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Forward a batch of prompts (optionally repeated) at one sparsity level.
+
+        When ``num_repeats > 1`` each prompt is duplicated ``num_repeats``
+        times so all repeats are processed in a single forward pass; the
+        returned tensors are averaged over repeats.
+
         Args:
-            prompt: Input text
-            sparsity_level: Sparsity level to test
-            tokenizer: Text tokenizer
-            num_repeats: Number of repetitions
-            
+            prompts: list of N text strings
+            sparsity_level: sparsity to inject
+            tokenizer: TextTokenizer
+            num_repeats: number of stochastic repeats (averaged)
+
         Returns:
-            Dictionary with results
+            features: [N, 6] pathway feature matrix (mean over repeats)
+            eeg:      [N, C] EEG signal matrix (mean over repeats)
         """
+        N = len(prompts)
         self.sparse_model.set_sparsity_level(sparsity_level)
-        self.sparse_model.eval()
-        
-        pathway_features_all = []
-        eeg_signals_all = []
-        
-        with torch.no_grad():
-            for _ in range(num_repeats):
-                # Tokenize
-                tokens = tokenizer.tokenize([prompt])
-                input_ids = tokens['input_ids'].to(self.device)
-                
-                # Forward through sparse model
-                output = self.sparse_model(
-                    input_ids=input_ids,
-                    return_attention_maps=True,
-                    return_hidden_states=False,
-                )
-                
-                # Extract attention and compute pathway features
-                attention_maps = output['attention_maps']
-                features = compute_pathway_features(attention_maps)
-                pathway_features_all.append(features)
-                
-                # Project to EEG
-                eeg_signal = self.eeg_projector(
-                    features.unsqueeze(0).to(self.device),
-                    training=False
-                )
-                eeg_signals_all.append(eeg_signal.squeeze(0))
-        
-        # Average across repeats
-        pathway_features_mean = torch.stack(pathway_features_all).mean(dim=0)
-        eeg_signals_mean = torch.stack(eeg_signals_all).mean(dim=0)
-        
-        return {
-            'sparsity_level': sparsity_level,
-            'pathway_features': pathway_features_mean.cpu().numpy(),
-            'eeg_signal': eeg_signals_mean.cpu().numpy(),
-        }
-    
+
+        if num_repeats > 1:
+            # Tile: [p0, p1, ..., p0, p1, ...] × num_repeats
+            tiled = prompts * num_repeats          # length N * num_repeats
+        else:
+            tiled = prompts
+
+        tokens = tokenizer.tokenize(tiled)
+        input_ids = tokens["input_ids"].to(self.device)
+        attention_mask = tokens["attention_mask"].to(self.device)
+
+        output = self.sparse_model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            return_attention_maps=True,
+            return_hidden_states=False,
+        )
+
+        # [N*repeats, 6] and [N*repeats, C]
+        features = compute_pathway_features(output["attention_maps"])
+        eeg = self.eeg_projector(features)
+
+        if num_repeats > 1:
+            # Reshape to [repeats, N, ...] then mean over repeats
+            features = features.reshape(num_repeats, N, -1).mean(dim=0)  # [N, 6]
+            eeg = eeg.reshape(num_repeats, N, -1).mean(dim=0)             # [N, C]
+
+        return features, eeg
+
+    # ------------------------------------------------------------------
+    # Experiments
+    # ------------------------------------------------------------------
+
     def experiment_1_pathway_to_sparsity(
         self,
         prompts: List[str],
         tokenizer: TextTokenizer,
+        per_sample_sparsity: Optional[List[float]] = None,
     ) -> Dict:
+        """Pathway metrics → predict sparsity.
+
+        Grid mode (``per_sample_sparsity=None``): all prompts are processed
+        together at each sparsity level — one forward pass per level.
+
+        Per-sample mode: each (prompt, sparsity) pair is its own forward.
         """
-        Experiment 1: Pathway metrics -> predict sparsity.
-        
-        Args:
-            prompts: List of test prompts
-            tokenizer: Text tokenizer
-            
-        Returns:
-            Results dictionary
-        """
-        results = {
-            'sparsity_levels': [],
-            'pathway_preds': [],
-            'correlations': [],
+        sparsity_gt: List[float] = []
+        pathway_preds: List[float] = []
+
+        if per_sample_sparsity is not None:
+            # Per-trial vividness path — unique sparsity per prompt
+            for prompt, sp in zip(prompts, per_sample_sparsity):
+                feats, _ = self.run_batch([prompt], sp, tokenizer, num_repeats=1)
+                pred = self.pathway_predictor(feats).squeeze(-1)  # [1]
+                sparsity_gt.append(sp)
+                pathway_preds.append(pred.item())
+        else:
+            # Grid path — batch all prompts at each sparsity level
+            for sp in self.sparsity_levels:
+                feats, _ = self.run_batch(prompts, sp, tokenizer, num_repeats=2)  # [N, 6]
+                preds = self.pathway_predictor(feats).squeeze(-1)                 # [N]
+                sparsity_gt.append(sp)
+                pathway_preds.append(preds.mean().item())
+
+        corr, _ = pearsonr(sparsity_gt, pathway_preds)
+        return {
+            "sparsity_levels": sparsity_gt,
+            "pathway_preds": pathway_preds,
+            "correlation": float(corr),
         }
-        
-        self.pathway_predictor.eval()
-        
-        for sparsity_level in self.sparsity_levels:
-            preds = []
-            
-            for prompt in prompts:
-                exp_result = self.run_single_level(
-                    prompt, sparsity_level, tokenizer, num_repeats=2
-                )
-                
-                features = torch.from_numpy(
-                    exp_result['pathway_features']
-                ).float().to(self.device)
-                
-                with torch.no_grad():
-                    pred = self.pathway_predictor(features.unsqueeze(0))
-                    preds.append(pred.item())
-            
-            results['sparsity_levels'].append(sparsity_level)
-            results['pathway_preds'].append(np.mean(preds))
-        
-        # Compute correlation
-        corr, _ = pearsonr(
-            results['sparsity_levels'],
-            results['pathway_preds']
-        )
-        results['correlation'] = corr
-        
-        return results
-    
+
     def experiment_2_eeg_to_sparsity(
         self,
         prompts: List[str],
         tokenizer: TextTokenizer,
+        per_sample_sparsity: Optional[List[float]] = None,
     ) -> Dict:
-        """
-        Experiment 2: EEG signal -> predict sparsity.
-        
-        Args:
-            prompts: List of test prompts
-            tokenizer: Text tokenizer
-            
-        Returns:
-            Results dictionary
-        """
-        results = {
-            'sparsity_levels': [],
-            'eeg_preds': [],
-            'correlations': [],
+        """EEG signal → predict sparsity."""
+        sparsity_gt: List[float] = []
+        eeg_preds: List[float] = []
+
+        if per_sample_sparsity is not None:
+            for prompt, sp in zip(prompts, per_sample_sparsity):
+                _, eeg = self.run_batch([prompt], sp, tokenizer, num_repeats=1)
+                pred = self.eeg_predictor(eeg).squeeze(-1)
+                sparsity_gt.append(sp)
+                eeg_preds.append(pred.item())
+        else:
+            for sp in self.sparsity_levels:
+                _, eeg = self.run_batch(prompts, sp, tokenizer, num_repeats=2)  # [N, C]
+                preds = self.eeg_predictor(eeg).squeeze(-1)                     # [N]
+                sparsity_gt.append(sp)
+                eeg_preds.append(preds.mean().item())
+
+        corr, _ = pearsonr(sparsity_gt, eeg_preds)
+        return {
+            "sparsity_levels": sparsity_gt,
+            "eeg_preds": eeg_preds,
+            "correlation": float(corr),
         }
-        
-        self.eeg_predictor.eval()
-        
-        for sparsity_level in self.sparsity_levels:
-            preds = []
-            
-            for prompt in prompts:
-                exp_result = self.run_single_level(
-                    prompt, sparsity_level, tokenizer, num_repeats=2
-                )
-                
-                eeg_signal = torch.from_numpy(
-                    exp_result['eeg_signal']
-                ).float().to(self.device)
-                
-                with torch.no_grad():
-                    pred = self.eeg_predictor(eeg_signal.unsqueeze(0))
-                    preds.append(pred.item())
-            
-            results['sparsity_levels'].append(sparsity_level)
-            results['eeg_preds'].append(np.mean(preds))
-        
-        # Compute correlation
-        corr, _ = pearsonr(
-            results['sparsity_levels'],
-            results['eeg_preds']
-        )
-        results['correlation'] = corr
-        
-        return results
-    
+
     def experiment_3_pathway_to_eeg_generalization(
         self,
         prompts: List[str],
         tokenizer: TextTokenizer,
+        per_sample_sparsity: Optional[List[float]] = None,
     ) -> Dict:
-        """
-        Experiment 3: Train on pathway features, test on EEG.
-        
-        This tests whether understanding pathway structure transfers to EEG.
-        
-        Args:
-            prompts: List of test prompts
-            tokenizer: Text tokenizer
-            
-        Returns:
-            Results dictionary
-        """
-        # Collect pathway-EEG pairs
-        pathway_features_all = []
-        eeg_signals_all = []
-        sparsity_all = []
-        
-        self.sparse_model.eval()
-        
-        with torch.no_grad():
-            for sparsity_level in self.sparsity_levels:
-                for prompt in prompts:
-                    exp_result = self.run_single_level(
-                        prompt, sparsity_level, tokenizer, num_repeats=1
-                    )
-                    
-                    pathway_features_all.append(exp_result['pathway_features'])
-                    eeg_signals_all.append(exp_result['eeg_signal'])
-                    sparsity_all.append(sparsity_level)
-        
-        # Stack into tensors
-        pathway_features_tensor = torch.from_numpy(
-            np.stack(pathway_features_all)
-        ).float()
-        eeg_signals_tensor = torch.from_numpy(
-            np.stack(eeg_signals_all)
-        ).float()
-        sparsity_tensor = torch.tensor(sparsity_all, dtype=torch.float32)
-        
-        # Evaluate on held-out data
-        pathway_preds = []
-        eeg_preds = []
-        
-        self.pathway_predictor.eval()
-        self.eeg_predictor.eval()
-        
-        with torch.no_grad():
-            pathway_preds = self.pathway_predictor(
-                pathway_features_tensor.to(self.device)
-            ).squeeze(-1).cpu().numpy()
-            
-            eeg_preds = self.eeg_predictor(
-                eeg_signals_tensor.to(self.device)
-            ).squeeze(-1).cpu().numpy()
-        
-        # Compute correlations
-        pathway_corr, _ = pearsonr(pathway_preds, sparsity_all)
-        eeg_corr, _ = pearsonr(eeg_preds, sparsity_all)
-        transfer_success = eeg_corr / (pathway_corr + 1e-8)
-        
+        """Evaluate pathway and EEG predictors on the held-out set."""
+        all_features: List[torch.Tensor] = []
+        all_eeg: List[torch.Tensor] = []
+        sparsity_gt: List[float] = []
+
+        if per_sample_sparsity is not None:
+            for prompt, sp in zip(prompts, per_sample_sparsity):
+                feats, eeg = self.run_batch([prompt], sp, tokenizer, num_repeats=1)
+                all_features.append(feats)
+                all_eeg.append(eeg)
+                sparsity_gt.append(sp)
+        else:
+            for sp in self.sparsity_levels:
+                feats, eeg = self.run_batch(prompts, sp, tokenizer, num_repeats=1)
+                all_features.append(feats)   # [N, 6]
+                all_eeg.append(eeg)          # [N, C]
+                sparsity_gt.extend([sp] * len(prompts))
+
+        features_t = torch.cat(all_features, dim=0)   # [total, 6]
+        eeg_t = torch.cat(all_eeg, dim=0)             # [total, C]
+
+        pathway_preds = self.pathway_predictor(features_t).squeeze(-1).cpu().numpy()
+        eeg_preds = self.eeg_predictor(eeg_t).squeeze(-1).cpu().numpy()
+
+        pathway_corr, _ = pearsonr(pathway_preds, sparsity_gt)
+        eeg_corr, _ = pearsonr(eeg_preds, sparsity_gt)
+
         return {
-            'pathway_correlation': pathway_corr,
-            'eeg_correlation': eeg_corr,
-            'transfer_success_rate': transfer_success,
-            'sparsity_levels': sparsity_all,
-            'pathway_predictions': pathway_preds.tolist(),
-            'eeg_predictions': eeg_preds.tolist(),
+            "pathway_correlation": float(pathway_corr),
+            "eeg_correlation": float(eeg_corr),
+            "transfer_success_rate": float(eeg_corr / (pathway_corr + 1e-8)),
+            "sparsity_levels": sparsity_gt,
+            "pathway_predictions": pathway_preds.tolist(),
+            "eeg_predictions": eeg_preds.tolist(),
         }
 
+
+# ---------------------------------------------------------------------------
+# Top-level entry point
+# ---------------------------------------------------------------------------
 
 def run_all_experiments(
     sparse_model: SparseAttentionWrapper,
@@ -288,56 +237,65 @@ def run_all_experiments(
     sparsity_levels: List[float],
     num_prompts: int = 5,
     results_dir: str = "./results",
+    prompts: Optional[List[str]] = None,
 ) -> Dict:
-    """
-    Run all three experiments.
-    
+    """Run all three experiments and serialise results.
+
     Args:
-        sparse_model: Sparse attention model
-        eeg_projector: EEG projector
-        pathway_predictor: Pathway predictor
-        eeg_predictor: EEG predictor
-        sparsity_levels: List of sparsity levels
-        num_prompts: Number of prompts to test
-        results_dir: Directory to save results
-        
-    Returns:
-        Dictionary with all results
+        sparse_model, eeg_projector, pathway_predictor, eeg_predictor:
+            trained model components.
+        sparsity_levels: discrete grid (synthetic mode) or per-sample values
+            from vividness normalisation (narrative mode).
+        num_prompts: number of synthetic prompts when ``prompts`` is None.
+        results_dir: output directory.
+        prompts: optional list of real narrative prompts; when provided
+            ``sparsity_levels`` must contain one entry per prompt.
     """
-    # Setup
     tokenizer = TextTokenizer()
-    prompts = create_default_prompts(num_prompts)
+
+    if prompts is not None:
+        per_sample_sparsity: Optional[List[float]] = list(sparsity_levels)
+        runner_levels = sorted(set(per_sample_sparsity))
+        print(
+            f"Using {len(prompts)} real narrative prompts with per-trial "
+            f"vividness-derived sparsity "
+            f"[{min(per_sample_sparsity):.3f}, {max(per_sample_sparsity):.3f}]"
+        )
+    else:
+        prompts = create_default_prompts(num_prompts)
+        per_sample_sparsity = None
+        runner_levels = sparsity_levels
+
     runner = ExperimentRunner(
         sparse_model, eeg_projector, pathway_predictor,
-        eeg_predictor, sparsity_levels
+        eeg_predictor, runner_levels,
     )
-    
-    # Run experiments
-    print("Running Experiment 1: Pathway -> Sparsity...")
-    exp1_results = runner.experiment_1_pathway_to_sparsity(prompts, tokenizer)
-    
-    print("Running Experiment 2: EEG -> Sparsity...")
-    exp2_results = runner.experiment_2_eeg_to_sparsity(prompts, tokenizer)
-    
-    print("Running Experiment 3: Pathway -> EEG Transfer...")
-    exp3_results = runner.experiment_3_pathway_to_eeg_generalization(prompts, tokenizer)
-    
-    # Combine results
+
+    print("Running Experiment 1: Pathway → Sparsity...")
+    exp1 = runner.experiment_1_pathway_to_sparsity(
+        prompts, tokenizer, per_sample_sparsity=per_sample_sparsity
+    )
+
+    print("Running Experiment 2: EEG → Sparsity...")
+    exp2 = runner.experiment_2_eeg_to_sparsity(
+        prompts, tokenizer, per_sample_sparsity=per_sample_sparsity
+    )
+
+    print("Running Experiment 3: Pathway → EEG Transfer...")
+    exp3 = runner.experiment_3_pathway_to_eeg_generalization(
+        prompts, tokenizer, per_sample_sparsity=per_sample_sparsity
+    )
+
     all_results = {
-        'experiment_1_pathway_to_sparsity': exp1_results,
-        'experiment_2_eeg_to_sparsity': exp2_results,
-        'experiment_3_pathway_to_eeg_transfer': exp3_results,
+        "experiment_1_pathway_to_sparsity": exp1,
+        "experiment_2_eeg_to_sparsity": exp2,
+        "experiment_3_pathway_to_eeg_transfer": exp3,
     }
-    
-    # Save results
+
     Path(results_dir).mkdir(parents=True, exist_ok=True)
     results_path = Path(results_dir) / "experiment_results.json"
-    
-    # Convert numpy types for JSON serialization
-    results_serializable = json.loads(json.dumps(all_results, default=float))
-    with open(results_path, 'w') as f:
-        json.dump(results_serializable, f, indent=2)
-    
+    with open(results_path, "w") as f:
+        json.dump(json.loads(json.dumps(all_results, default=float)), f, indent=2)
     print(f"Results saved to {results_path}")
-    
+
     return all_results
