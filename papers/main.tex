@@ -1,0 +1,89 @@
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf-8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{subcaption}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=blue,
+    pdftitle={EEG Reflects Projections of Computational Pathways},
+    pdfauthor={Your Name}
+}
+
+% Title and metadata
+\title{EEG Reflects Projections of Computational Pathways: \\
+       A Causal Test of Neural Routing via Sparse Attention}
+
+\author{Anonymous}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\section{Introduction}
+\input{sections/introduction}
+
+\section{Hypothesis and Theoretical Framework}
+\input{sections/hypothesis}
+
+\section{Methods}
+\input{sections/methods}
+
+\subsection{Sparse Attention Control}
+\input{sections/methods_attention}
+
+\subsection{Pathway Metrics}
+\input{sections/methods_metrics}
+
+\subsection{EEG Projection}
+\input{sections/methods_projection}
+
+\subsection{Predictive Modeling}
+\input{sections/methods_prediction}
+
+\section{Experiments}
+\input{sections/experiments}
+
+\section{Results}
+\input{sections/results}
+
+\section{Discussion}
+\input{sections/discussion}
+
+\section{Limitations and Future Work}
+\input{sections/limitations}
+
+\section{Conclusion}
+\input{sections/conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\appendix
+\section{Implementation Details}
+\input{sections/appendix_implementation}
+
+\section{Extended Metrics}
+\input{sections/appendix_metrics}
+
+\end{document}

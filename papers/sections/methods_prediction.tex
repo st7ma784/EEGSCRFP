@@ -1,0 +1,44 @@
+We train two independent MLPs to predict sparsity level from pathway features and EEG signals:
+
+\begin{equation}
+\hat{s}_{\mathcal{P}} = \text{MLP}_{\mathcal{P}}(\mathcal{P}; \theta_{\mathcal{P}}) \quad \text{and} \quad \hat{s}_{\mathcal{E}} = \text{MLP}_{\mathcal{E}}(\mathcal{E}; \theta_{\mathcal{E}})
+\end{equation}
+
+Both MLPs share the same architecture:
+
+\begin{equation}
+\text{MLP} = \text{Linear}(d_{\text{in}}, 256) \to \text{ReLU} \to \text{Dropout}(0.1) \to \text{Linear}(256, 128) \to \text{ReLU} \to \text{Dropout}(0.1) \to \text{Linear}(128, 1)
+\end{equation}
+
+Training uses mean squared error loss:
+
+\begin{equation}
+\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{pathway}} + \mathcal{L}_{\text{EEG}} = \text{MSE}(\hat{s}_{\mathcal{P}}, s) + \text{MSE}(\hat{s}_{\mathcal{E}}, s)
+\end{equation}
+
+\subsection*{Optimization}
+
+\begin{itemize}
+    \item Optimizer: AdamW with $\text{lr} = 10^{-3}$, $\text{weight\_decay} = 10^{-5}$
+    \item Batch size: 8
+    \item Epochs: 20
+    \item Gradient clipping: 1.0
+    \item Train/val split: 80/20
+\end{itemize}
+
+\subsection*{Evaluation Metrics}
+
+We report:
+
+\begin{enumerate}
+    \item \textbf{Pearson Correlation} ($r$): Between predictions and true sparsity
+    \item \textbf{MSE Loss}: Regression error 
+    \item \textbf{Transfer Success Rate}: $r_{\text{EEG}} / (r_{\text{pathway}} + \epsilon)$, indicating how well pathway structure transfers to EEG
+\end{enumerate}
+
+Success is defined as:
+\begin{itemize}
+    \item Pathway correlation $r_{\mathcal{P}} > 0.6$: Pathway metrics are valid
+    \item EEG correlation $r_{\mathcal{E}} > 0.3$: Information survives projection
+    \item Transfer rate $> 0.5$: EEG predictions are at least half as good as pathway predictions
+\end{itemize}

@@ -1,0 +1,37 @@
+We compute six pathway metrics from attention maps, each capturing a distinct aspect of routing structure:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{llp{5cm}}
+\toprule
+\textbf{Metric} & \textbf{Dimension} & \textbf{Interpretation} \\
+\midrule
+1. Routing Sparsity & Scalar & Effective number of active attention paths (Rényi entropy) \\
+2. Path Competition & Scalar & Dominance of top attention weight: $\max(W) / \text{mean}(W)$ \\
+3. Path Efficiency & Scalar & Energy concentration in top-$k$ weights (20\% rule) \\
+4. Routing Entropy & Scalar & Shannon entropy of attention distributions \\
+5. Inter-head Divergence & Scalar & Mean KL-divergence between attention heads \\
+6. Layer Stability & Scalar & Cosine similarity between consecutive layer attentions \\
+\bottomrule
+\end{tabular}
+\caption{Pathway Metrics. All metrics are computed per layer, then averaged.}
+\label{tab:metrics}
+\end{table}
+
+\subsection*{Motivation}
+
+\begin{enumerate}
+    \item \textbf{Routing Sparsity}: Measures effective dimensionality of the path distribution. Sparse attention reduces this.
+    \item \textbf{Path Competition}: Quantifies "winner-take-all" dynamics. Higher competition indicates concentrated routing.
+    \item \textbf{Path Efficiency}: Captures how much model capacity is utilized; more efficient routing allocates mass to fewer paths.
+    \item \textbf{Routing Entropy}: Inverse measure of organization. Lower entropy $\leftrightarrow$ more structured routing.
+    \item \textbf{Inter-head Divergence}: Tests whether different attention heads develop specialized roles or are redundant.
+    \item \textbf{Layer Stability}: Checks whether routing patterns are consistent across layers (indicating learned structure) or noisy.
+\end{enumerate}
+
+Collectively, these metrics form a 6-dimensional pathway signature $\mathcal{P} \in \mathbb{R}^6$.
+
+\subsection*{Normalization}
+
+All metrics are computed on batch-averaged attention maps and then z-scored to unit variance before projection or prediction.

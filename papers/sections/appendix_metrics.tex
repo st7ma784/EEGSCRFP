@@ -1,0 +1,51 @@
+\subsection{Metric Formulas}
+
+All metrics are computed on attention weights $\mathbf{A} \in \mathbb{R}^{H \times L \times L}$ (heads, sequence positions, keys).
+
+\subsubsection{Routing Sparsity}
+
+\begin{equation}
+\text{RS} = \exp\left( \text{Rényi}_2(\mathbf{A}) \right) = \frac{1}{\sum_{i} p_i^2}
+\end{equation}
+
+where $p_i = \mathbf{A}_i / \sum_j \mathbf{A}_j$ are normalized attention weights.
+
+\subsubsection{Path Competition Index}
+
+\begin{equation}
+\text{PCI} = \frac{\max(\mathbf{A})}{\text{mean}(\mathbf{A}[>\epsilon])}
+\end{equation}
+
+where we exclude near-zero values ($\epsilon = 10^{-5}$) to focus on active paths.
+
+\subsubsection{Path Efficiency}
+
+\begin{equation}
+\text{PE} = \frac{\sum_{i=1}^{0.2L} \mathbf{A}_{\text{sorted}i}}{\sum_i \mathbf{A}_i}
+\end{equation}
+
+Fraction of total attention mass concentrated in top 20\% of weights.
+
+\subsubsection{Routing Entropy}
+
+\begin{equation}
+\text{RE} = -\sum_i p_i \log(p_i + \epsilon)
+\end{equation}
+
+Shannon entropy of normalized attention distribution.
+
+\subsubsection{Inter-head Divergence}
+
+\begin{equation}
+\text{IHD} = \frac{1}{\binom{H}{2}} \sum_{i < j} \text{KL}(p_i || p_j)
+\end{equation}
+
+Mean pairwise KL divergence between attention heads.
+
+\subsubsection{Layer-wise Stability}
+
+\begin{equation}
+\text{LS} = \text{CosineSim}(\text{vec}(\mathbf{A}^{(\ell)}), \text{vec}(\mathbf{A}^{(\ell+1)}))
+\end{equation}
+
+Cosine similarity between flattened attention matrices of consecutive layers.

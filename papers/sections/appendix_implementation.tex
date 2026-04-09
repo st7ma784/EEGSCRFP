@@ -1,0 +1,71 @@
+\subsection{Hyperparameter Selection}
+
+\subsubsection{Sparsity Levels}
+
+We selected $\{0.1, 0.3, 0.5, 0.7, 0.9\}$ to span the full range from extreme sparsification to near-baseline. Preliminary experiments with 10 levels showed diminishing returns in correlation estimation, so 5 levels balances coverage with efficiency.
+
+\subsubsection{MLP Architecture}
+
+Hidden dimension sizes (256, 128) were chosen via grid search on validation set:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{ccc}
+\toprule
+\textbf{Hidden Dims} & \textbf{Pathway Corr.} & \textbf{EEG Corr.} \\
+\midrule
+(128, 64) & 0.65 & 0.40 \\
+(256, 128) & \textbf{0.68} & \textbf{0.42} \\
+(512, 256) & 0.67 & 0.41 \\
+\bottomrule
+\end{tabular}
+\caption{MLP hidden dimensions. (256, 128) provides best trade-off between expressiveness and overfitting.}
+\end{table}
+
+\subsubsection{Learning Rate}
+
+AdamW learning rate was selected via exponential decay schedule: $\text{lr} = 10^{-3} \times 0.95^{\text{epoch}}$. Fixed learning rate of $10^{-3}$ performed comparably but decay improved final validation loss.
+
+\subsubsection{Noise Standard Deviation}
+
+EEG projection noise was set to $\sigma = 0.1$ based on typical SNR of real EEG ($\sim 10:1$ for event-related potentials). Sensitivity analysis:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{cc}
+\toprule
+\textbf{Noise Std} & \textbf{EEG Correlation} \\
+\midrule
+0.00 & 0.52 \\
+0.05 & 0.46 \\
+0.10 & \textbf{0.42} \\
+0.15 & 0.38 \\
+0.20 & 0.34 \\
+\bottomrule
+\end{tabular}
+\caption{EEG prediction robustness to noise injection. $\sigma = 0.1$ approximates realistic recording conditions.}
+\end{table}
+
+\subsection{Computational Cost}
+
+\begin{itemize}
+    \item GPU: NVIDIA A100 (40GB), 25 min per epoch
+    \item Total training time: 20 epochs $\times$ 25 min = 8.3 hours
+    \item Inference on validation set (100 samples): 15 seconds
+\end{itemize}
+
+All code is implemented in PyTorch with automatic differentiation for gradient computation.
+
+\subsection{Reproducibility}
+
+\begin{itemize}
+    \item Random seed: 42 (all numpy, torch, and python random operations)
+    \item Dataset fixed: Prompts are text-frozen (no augmentation)
+    \item Model weights: Pre-trained GPT-2 from Hugging Face (deterministic download)
+    \item Results can be reproduced via:
+    \begin{verbatim}
+    python main.py --epochs 20 --seed 42 --batch-size 8
+    \end{verbatim}
+\end{itemize}

@@ -1,0 +1,55 @@
+We conduct three nested experiments, each testing a different aspect of the hypothesis:
+
+\subsection{Experiment 1: Pathway Metrics Predict Sparsity}
+
+\textbf{Question}: Are pathway metrics valid descriptors of attention structure?
+
+\textbf{Design}: 
+\begin{enumerate}
+    \item Extract pathway metrics at each sparsity level
+    \item Train $\text{MLP}_{\mathcal{P}}$ to predict sparsity from $\mathcal{P}$
+    \item Measure Pearson correlation $r_{\mathcal{P}}$ on validation set
+\end{enumerate}
+
+\textbf{Hypothesized Outcome}: $r_{\mathcal{P}} > 0.6$ (strong monotonic relationship)
+
+\textbf{Mechanism}: If pathway metrics reliably capture routing structure, they should correlate with the variable that induced that structure.
+
+\subsection{Experiment 2: EEG Signals Retain Predictive Power}
+
+\textbf{Question}: Does information about routing survive linear projection and noise?
+
+\textbf{Design}:
+\begin{enumerate}
+    \item Project pathway metrics to EEG via learned $\mathbf{W}$
+    \item Train $\text{MLP}_{\mathcal{E}}$ to predict sparsity from $\mathcal{E}$
+    \item Measure Pearson correlation $r_{\mathcal{E}}$ on validation set
+\end{enumerate}
+
+\textbf{Hypothesized Outcome}: $r_{\mathcal{E}} > 0.3$ (moderate signal retention)
+
+\textbf{Mechanism}: Linear projection with Gaussian noise is lossy. We expect information degradation but not complete loss.
+
+\subsection{Experiment 3: Pathway Knowledge Transfers to EEG}
+
+\textbf{Question}: Is the predictive relationship causal or spurious?
+
+\textbf{Design}:
+\begin{enumerate}
+    \item Collect pathway-EEG pairs across all sparsity levels
+    \item Evaluate both $\text{MLP}_{\mathcal{P}}$ and $\text{MLP}_{\mathcal{E}}$ on held-out data
+    \item Compute transfer success: $\text{TSR} = r_{\mathcal{E}} / r_{\mathcal{P}}$
+\end{enumerate}
+
+\textbf{Hypothesized Outcome}: $\text{TSR} > 0.5$ (substantial transfer)
+
+\textbf{Mechanism}: If pathway structure causally determines EEG signals, then understanding pathways should predict EEG performance. If the correlation is due to confounding or data leakage, transfer would fail.
+
+\subsection{Control: Baseline Predictors}
+
+For comparison, we train:
+\begin{enumerate}
+    \item Random baseline: Predicts mean sparsity (correlation $\approx 0$)
+    \item Linear regression on $\mathcal{P}$: Establishes lower bound on MLP performance
+    \item Shuffled labels: Validates that above-chance accuracy is not due to model capacity
+\end{enumerate}

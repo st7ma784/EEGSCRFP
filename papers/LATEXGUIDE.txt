@@ -1,0 +1,146 @@
+% LaTeX Preamble - Common Packages and Settings
+% This file documents the LaTeX setup used in main.tex
+
+% Document Class: article
+% Size: 11pt, A4 paper, single-column
+
+% Key Packages:
+% - inputenc: UTF-8 input encoding
+% - geometry: 1-inch margins
+% - amsmath, amssymb: Mathematical symbols and environments
+% - graphicx: Graphics inclusion
+% - hyperref: Hyperlinks (colored, PDF bookmarks)
+% - natbib: Flexible bibliography
+% - xcolor: Colored text (for highlighting)
+% - algorithm, algpseudocode: Algorithm formatting
+% - booktabs: Professional tables
+% - float, subcaption: Figure/table placement and subfigures
+
+% COMPILATION NOTES
+% =================
+
+% Quick Compilation (pdflatex only):
+%   pdflatex main.tex
+%   pdflatex main.tex  (repeat for references)
+%   pdflatex main.tex  (one more for footnotes)
+
+% Full Compilation (with bibliography):
+%   pdflatex main.tex
+%   bibtex main.aux
+%   pdflatex main.tex
+%   pdflatex main.tex
+
+% Automatic Compilation (using latexmk):
+%   latexmk -pdf main.tex
+%   latexmk -pdf -c   (cleanup temporary files)
+
+% WRITING CONVENTIONS USED IN THIS PAPER
+% =======================================
+
+% 1. CITATIONS
+%    In-text: \cite{Clark2019} or \citet{Clark2019} (with name)
+%    Example: "Previous work \citep{Vaswani2017} shows..."
+
+% 2. EQUATIONS
+%    Inline math: $x = y$ (inside text)
+%    Display math: \[ x = y \] (on own line)
+%    Numbered: \begin{equation} ... \end{equation}
+%    Reference: \eqref{eq:label} or \ref{eq:label}
+
+% 3. FIGURES AND TABLES
+%    \begin{figure}[H]  for exact positioning
+%    \begin{table}[H]   for exact positioning
+%    [!t] for top, [!b] for bottom (if not using H)
+
+% 4. SECTIONS AND REFERENCES
+%    \label{sec:name} for sections
+%    \label{fig:name} for figures
+%    \label{tab:name} for tables
+%    \label{eq:name} for equations
+%    Reference: \ref{sec:name}, \cref{fig:name} (if using cleveref)
+
+% 5. EMPHASIS
+%    Bold: \textbf{text}
+%    Italic: \textit{text}
+%    Code: \texttt{code}
+%    Small caps: \textsc{text}
+
+% 6. LISTS
+%    Bullet: \begin{itemize} ... \end{itemize}
+%    Numbered: \begin{enumerate} ... \end{enumerate}
+%    Description: \begin{description} ... \end{description}
+
+% 7. SPECIAL BOXES
+%    Frame: \fbox{content} or \framebox{content}
+%    Colored box: \colorbox{color}{content}
+
+% 8. SPECIAL SYMBOLS
+%    Right arrow: \rightarrow or \to
+%    Approximately: \approx
+%    Infinity: \infty
+%    With hat: \hat{x}
+%    Vector: \mathbf{x} or \vec{x}
+%    Set: \mathcal{X}
+
+% TYPICAL STRUCTURE
+% =================
+
+% 1. Title, author, date
+% 2. Abstract (50-250 words)
+% 3. Introduction (motivation, related work, contributions)
+% 4. Methods (experimental design, algorithms, datasets)
+% 5. Results (findings, tables, figures)
+% 6. Discussion (interpretation, implications, comparison to prior work)
+% 7. Conclusion (summary, future work)
+% 8. References (bibliography)
+% 9. Appendices (technical details, proofs, extra tables)
+
+% STYLE GUIDE
+% ===========
+
+% Page limit: Target 12-15 pages (excluding appendices)
+% Single-column: Easier to read and standard for journals
+% References: Use natbib format for flexibility
+% Figures: Embed as PDF or high-res PNG (min 300 dpi)
+% Hyperlinks: Blue for URLs, internal references (configured in hyperref)
+% Line spacing: Single-spaced (compact, professional)
+% Margins: 1 inch on all sides (standard)
+
+% TIPS FOR WRITING
+% ================
+
+% 1. Abstract: Write last, after all content is final
+% 2. Results: Use tables and figures to communicate findings
+% 3. Discussion: Interpret results and situate in literature
+% 4. References: Include all sources cited and some key references
+% 5. Math: Use consistent notation throughout
+% 6. Figures: Clear labels, captions, high quality
+% 7. Tables: Professional formatting with booktabs package
+% 8. Spelling: Check for typos before final submission
+
+% COLORS FOR HIGHLIGHTING (in text)
+% =================================
+% \textcolor{blue}{blue text}
+% \textcolor{red}{red text}
+% \textcolor{green}{green text}
+
+% COMMON MATHEMATICAL NOTATION
+% =============================
+% X \in \mathbb{R}^{n \times m}  (real n×m matrix)
+% x \in \mathbb{R}^n             (real vector)
+% \theta \in \Theta               (parameters from parameter space)
+% \approx                         (approximately equal)
+% \propto                         (proportional to)
+% \implies                        (implies)
+% \Leftrightarrow                 (if and only if)
+
+% TO SUPPRESS PAGE NUMBERS:
+% \thispagestyle{empty}
+
+% TO ADD PAGE BREAKS:
+% \newpage  or \pagebreak
+
+% TO ADD FOOTNOTES:
+% Text here.\footnote{Footnote content}
+
+% END OF PREAMBLE DOCUMENTATION

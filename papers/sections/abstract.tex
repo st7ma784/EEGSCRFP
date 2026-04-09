@@ -1,0 +1,7 @@
+We propose a causal test of the hypothesis that electroencephalography (EEG) reflects projections of internal computational pathways. Specifically, we test whether observable changes in neural routing structures—induced by controlling attention sparsity in transformers—remain detectable after random linear projection to EEG-like recordings. 
+
+Using a sparse attention mechanism applied to language models, we systematically vary the sparsity of attention distributions (the \textit{independent variable}) and measure resulting pathway structures (attention patterns, routing entropy, inter-head divergence) as observations. We then project these pathway features to $105$-channel EEG-like signals via a learned linear transformation.
+
+Our key finding is that pathway structure—quantified via six routing metrics—monotonically relates to attention sparsity. Critically, EEG-projected signals retain significant predictive power for sparsity level (correlation $r > 0.3$), demonstrating that information about internal routing survives dimensionality reduction and noise injection. Furthermore, models trained on pathway features transfer substantially to EEG-only predictions (transfer success $> 0.5$).
+
+These results support the hypothesis that aggregate EEG signals reflect meaningful projections of computational routing, with implications for understanding the neural basis of cognition and the interpretation of non-invasive neural recordings.

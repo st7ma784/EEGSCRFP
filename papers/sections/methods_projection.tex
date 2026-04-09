@@ -1,0 +1,29 @@
+We project pathway features to EEG-like signals via a learned linear transformation:
+
+\begin{equation}
+\mathcal{E} = \mathbf{W} \mathcal{P} + \mathbf{b} + \boldsymbol{\epsilon}
+\end{equation}
+
+where $\mathbf{W} \in \mathbb{R}^{105 \times 6}$ is a learned projection matrix, $\mathbf{b} \in \mathbb{R}^{105}$ is a bias vector, and $\boldsymbol{\epsilon} \sim \mathcal{N}(0, \sigma^2)$ is Gaussian noise ($\sigma = 0.1$).
+
+\subsection*{Design Rationale}
+
+\begin{enumerate}
+    \item \textbf{Linearity}: Real EEG involves complex filtering and volume conduction, but the leading-order effect is linear spatial mixing. Our projection models this directly.
+    
+    \item \textbf{105 Channels}: Standard EEG systems use $\sim 64$--$128$ channels. We fix 105 to match the 10-5 electrode system used in clinical EEG.
+    
+    \item \textbf{Noise Injection}: Real recordings are corrupted by thermal noise, muscle artifact, and other sources. We add Gaussian noise with $\sigma = 0.1$ (10\% of typical signal magnitude).
+    
+    \item \textbf{No Temporal Dynamics}: We project static pathway signatures, not time series. This is analagous to extracting EEG features at a single time point.
+\end{enumerate}
+
+\subsection*{Learning Objective}
+
+The projection matrix is learned jointly with predictors via standard regression:
+
+\begin{equation}
+\mathcal{L}_{\text{proj}} = \text{MSE}(\hat{s}_{\mathcal{P}}, s) + \text{MSE}(\hat{s}_{\mathcal{E}}, s)
+\end{equation}
+
+This encourages the projector to preserve task-relevant information about sparsity.

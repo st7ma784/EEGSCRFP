@@ -1,0 +1,19 @@
+The relationship between internal neural computations and non-invasive recordings like electroencephalography (EEG) remains poorly understood. EEG provides a window into large-scale brain activity, yet the mapping from cellular/circuit-level computations to surface recordings is complex, involving spatial mixing, filtering, and volume conduction effects.
+
+A central question in neuroscience is: \textit{What can we infer about internal computational structures from non-invasive recordings?} This question is particularly acute given the growing use of deep neural networks as models of neural computation \cite{Kriegeskorte2015, Yamins2016}. If artificial neural networks capture principles of biological computation, understanding how internal routing structures project to observable signals could illuminate the neural basis of cognition.
+
+Recent work has highlighted the importance of sparse attention in Transformers, where selective focus on relevant information improves both computational efficiency and interpretability \cite{Child2019, Zaheer2020}. Yet it remains unclear whether changes in internal attention routing produce measurable signals at the population level.
+
+We approach this as a causal inference problem: \textit{If we experimentally control attention sparsity in a neural network and observe corresponding changes in downstream signals, how well does the inferred causal structure transfer to real neural recordings?}
+
+This paper tests this through a systematic protocol:
+
+\begin{enumerate}
+    \item Create a controlled system (transformer with sparse attention)
+    \item Extract pathway metrics (6 routing measures from attention)
+    \item Project to EEG-like format (linear mapping to 105 channels)
+    \item Quantify information retention through predictive modeling
+    \item Test causal transfer (pathway $\rightarrow$ EEG generalization)
+\end{enumerate}
+
+The goal is not to model real EEG, but to test whether a \textit{principle}—"computational routing structure projects to population signals"—holds under controlled conditions. Success would suggest that EEG interpretability through the lens of internal routing is theoretically grounded.

@@ -1,0 +1,51 @@
+\label{sec:limitations}
+
+\subsection{Model Limitations}
+
+\begin{enumerate}
+    \item \textbf{Artificial Neural Network}: While transformers are useful models of neural computation, they differ from biological neural networks in architecture, learning rules, and dynamics. Our findings may not directly generalize to biological EEG.
+    
+    \item \textbf{Fixed Prompts}: We use a constant set of prompts to isolate the effect of sparsity. In realistic scenarios, content variation would interact with routing structure.
+    
+    \item \textbf{Linear Projection}: Real EEG involves nonlinear mixing through the head volume conductor. Future work should test whether nonlinear projections improve transfer.
+    
+    \item \textbf{No Temporal Dynamics}: We extract static pathway signatures. Real EEG is a time series; temporal correlations may further improve information transfer.
+\end{enumerate}
+
+\subsection{Experimental Design Limitations}
+
+\begin{enumerate}
+    \item \textbf{Single Model}: We only test GPT-2. Results may differ for larger models or different architectures (RNNs, CNNs, etc.).
+    
+    \item \textbf{Limited Sparsity Range}: Five discrete levels may not fully characterize the pathway-sparsity relationship. A continuous scan might reveal nonlinearities.
+    
+    \item \textbf{Small Sample Size}: 500 samples is modest by modern ML standards. Scaling to $10^4$--$10^5$ samples might reveal finer structure.
+    
+    \item \textbf{No Behavioral Data}: We do not measure whether changes in routing affect task performance. A triple dissociation (sparsity $\rightarrow$ routing $\rightarrow$ performance) would strengthen causal claims.
+\end{enumerate}
+
+\subsection{Statistical Limitations}
+
+\begin{enumerate}
+    \item \textbf{Correlation vs. Causation}: While our transfer experiment supports causality, we cannot rule out confounding. For example, both pathways and EEG might be downstream of a latent variable.
+    
+    \item \textbf{Generalization}: Validation is on held-out data from the same distribution. True generalization would require testing on novel prompts, models, or sparsity levels.
+    
+    \item \textbf{Multiple Comparisons}: We report 12+ correlations without correction for multiple comparisons. Bonferroni correction would reduce significance of some findings.
+\end{enumerate}
+
+\subsection{Future Directions}
+
+\begin{enumerate}
+    \item \textbf{Biological Validation}: Test predictions on real EEG data from humans performing cognit tasks. Can routing-based models explain EEG variance better than stimulus-based models?
+    
+    \item \textbf{Nonlinear Projections}: Develop learned nonlinear mappings from pathways to EEG, potentially improving transfer.
+    
+    \item \textbf{Temporal EEG}: Extend to time series by modeling dynamic attention and coupling to neural oscillations.
+    
+    \item \textbf{Other Modalities}: Test whether routing structure projects to MEG, fMRI, or electrocorticography (all have different spatial/temporal resolution).
+    
+    \item \textbf{Causal Manipulation}: Use TMS or pharmacological interventions to manipulate attention in humans and measure resulting EEG changes.
+    
+    \item \textbf{Larger Models}: Extend to GPT-3 scale or vision transformers to probe scaling behavior.
+\end{enumerate}

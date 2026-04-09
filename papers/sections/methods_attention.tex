@@ -1,0 +1,22 @@
+We modify GPT-2 attention computation to support dynamic sparsity control via top-$k$ masking. Given attention weights $\mathbf{W} \in \mathbb{R}^{B \times H \times L \times L}$ (batch, heads, sequence length, sequence length), we apply:
+
+\begin{equation}
+\mathbf{W}_{\text{sparse}} = \text{Renormalize}(\mathbf{W} \odot \text{TopK}(\mathbf{W}, k = \alpha L))
+\end{equation}
+
+where $\alpha \in [0, 1]$ is the sparsity level (fraction of top weights to keep) and $\text{TopK}$ produces a binary mask.
+
+The base model remains frozen; sparsity is injected at inference only. This ensures changes in downstream representations result solely from altered attention routing, not from training-induced plasticity.
+
+\subsection*{Sparsity Parametrization}
+
+We use five discrete levels:
+\begin{itemize}
+    \item $\alpha = 0.1$: Highly sparse (keep top 10\% of attention)
+    \item $\alpha = 0.3$: Sparse
+    \item $\alpha = 0.5$: Moderate
+    \item $\alpha = 0.7$: Dense
+    \item $\alpha = 0.9$: Very dense (mild perturbation)
+\end{itemize}
+
+This range spans from extreme sparsification to near-baseline behavior, enabling detection of monotonic relationships.

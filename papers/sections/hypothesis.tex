@@ -1,0 +1,52 @@
+\subsection{Core Hypothesis}
+
+We propose the following causal hypothesis:
+
+\begin{center}
+\fbox{\begin{minipage}{0.9\textwidth}
+\textbf{H$_0$}: Internal routing structure (pathway characteristics, attention sparsity patterns) is observable at the population level through \textit{dimensionality-reducing projections} that maintain information about the variable inducing changes in routing.
+\end{minipage}}
+\end{center}
+
+Formally, let $\mathcal{S} \in \mathbb{R}^+$ denote sparsity level (independent manipulation), $\mathcal{P} \in \mathbb{R}^d$ denote pathway features (high-dimensional representation of routing), and $\mathcal{E} \in \mathbb{R}^c$ denote EEG-like signals (low-dimensional projection).
+
+We hypothesize:
+\begin{equation}
+\mathcal{S} \xrightarrow{\text{model}} \mathcal{P} \xrightarrow{\text{projection}} \mathcal{E}
+\end{equation}
+
+with the property that information about $\mathcal{S}$ is preserved through both stages.
+
+\subsection{Operationalization}
+
+We operationalize this through three nested predictions:
+
+\begin{enumerate}
+    \item \textbf{Exp 1}: Pathway metrics $(d=6)$ predict sparsity level (validity of pathway metric extraction)
+    \item \textbf{Exp 2}: EEG signals $(c=105)$ predict sparsity level (information retention through projection)
+    \item \textbf{Exp 3}: Pathway-trained predictor transfers to EEG task (causal mechanism vs. statistical correlation)
+\end{enumerate}
+
+\subsection{Theoretical Motivation}
+
+Three principles motivate this hypothesis:
+
+\begin{enumerate}
+    \item \textbf{Structural Causality}: Attention patterns causally influence hidden state representations and information flow. EEG (as a projection of neural populations) should reflect changes in this structure.
+    
+    \item \textbf{Dimensionality and Noise}: Modern EEG recordings involve $\sim 64$--$256$ channels but integrate signals from millions of neurons. This reduction should preserve low-dimensional structure (routing patterns) while filtering high-dimensional noise.
+    
+    \item \textbf{Universality}: If attention sparsity is a fundamental principle of neural computation (as supported by sparse coding and efficient coding theories), then its effects should be observable across different measurement modalities.
+\end{enumerate}
+
+\subsection{Alternative Hypothesis}
+
+The null hypothesis is:
+
+\begin{center}
+\fbox{\begin{minipage}{0.9\textwidth}
+\textbf{H$_1$}: Routing structure cannot be reliably recovered from low-dimensional projections; information about $\mathcal{S}$ is lost in the dimensionality reduction.
+\end{minipage}}
+\end{center}
+
+Under $H_1$, EEG signals would provide no better than chance-level prediction of routing sparsity.

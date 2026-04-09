@@ -1,0 +1,28 @@
+Our experimental design involves four main components: a sparse attention model, pathway metric extraction, EEG projection, and predictive validation.
+
+\subsection*{Model and Data}
+
+We use GPT-2 (124M parameters) as the base transformer. The model processes a fixed set of 10 prompts under 5 sparsity levels ($\{0.1, 0.3, 0.5, 0.7, 0.9\}$), generating 5 samples per condition (500 total samples, with 80/20 train-val split).
+
+\subsection*{Experimental Protocol}
+
+\begin{algorithm}
+\caption{Causal EEG Hypothesis Testing Protocol}
+\begin{algorithmic}[1]
+\State \textbf{Input}: Fixed prompts, Sparsity levels $S$, Transformer $M$
+\For{each sparsity level $s \in S$}
+    \For{each prompt $p$}
+        \State Set $M$.attention$\_$sparsity $\leftarrow s$
+        \State Compute attention maps $A \leftarrow M(p)$
+        \State Extract pathway metrics $\mathcal{P} \leftarrow \text{PathwayMetrics}(A)$
+        \State Project to EEG: $\mathcal{E} \leftarrow \text{Projector}(\mathcal{P})$
+        \State Record $(p, s, \mathcal{P}, \mathcal{E})$
+    \EndFor
+\EndFor
+\State Train pathway predictor: $\hat{s}_{\mathcal{P}} = \text{MLP}_{\mathcal{P}}(\mathcal{P})$
+\State Train EEG predictor: $\hat{s}_{\mathcal{E}} = \text{MLP}_{\mathcal{E}}(\mathcal{E})$
+\State Evaluate transfer: $r_{transfer} = \text{corr}(\hat{s}_{\mathcal{E}}, s)$
+\end{algorithmic}
+\end{algorithm}
+
+The key constraint is that sparsity is \textit{not directly encoded} in features; it acts only through attention distribution.
