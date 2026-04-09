@@ -85,9 +85,10 @@ def inter_head_divergence(stacked: torch.Tensor) -> torch.Tensor:
     cross = torch.bmm(p, log_p.transpose(1, 2))            # [LB, H, H]
     kl = self_term.unsqueeze(2) - cross                     # [LB, H, H]  KL[i,j]
 
-    # Upper-triangle mask (exclude diagonal)
-    mask = torch.triu(torch.ones(H, H, device=stacked.device, dtype=torch.bool), diagonal=1)
-    kl_per_lb = kl[:, mask].mean(dim=-1)                    # [LB]
+    # Sum upper triangle (above diagonal) — avoids allocating a bool mask
+    # and the fancy-indexed gather it requires.
+    n_pairs = H * (H - 1) // 2
+    kl_per_lb = torch.triu(kl, diagonal=1).sum(dim=(-2, -1)) / n_pairs  # [LB]
     return kl_per_lb.reshape(L, B).mean(dim=0)             # [B]
 
 

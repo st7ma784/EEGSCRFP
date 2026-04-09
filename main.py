@@ -17,7 +17,8 @@ from src.data.narrative_loader import (
     load_narrative_records,
     vividness_to_sparsity,
 )
-from src.lightning_module import create_lightning_module
+from src.lightning_module import create_lightning_module, create_cached_module
+from src.data.feature_cache import extract_and_cache, CachedFeaturesDataset
 from experiments.runner import run_all_experiments
 
 
@@ -28,6 +29,29 @@ def setup_logger():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     return logging.getLogger(__name__)
+
+
+def _build_raw_dataset_and_collate(config: Config):
+    """Return the raw (text + sparsity) dataset and its collate_fn.
+
+    Used during Phase 1 (feature extraction) to build the full dataset
+    without splitting it into train/val.
+    """
+    collate_fn = get_collate_fn(
+        model_name=config.model.model_name,
+        max_length=config.model.max_seq_length,
+    )
+    if config.data.narrative_data_dir:
+        dataset = NarrativeSparsityDataset(config.data.narrative_data_dir)
+    else:
+        from src.data.dataset import SparsityDataset
+        prompts = create_default_prompts(config.data.num_prompts)
+        dataset = SparsityDataset(
+            prompts=prompts,
+            sparsity_levels=config.data.sparsity_levels,
+            samples_per_sparsity=config.data.num_samples_per_sparsity,
+        )
+    return dataset, collate_fn
 
 
 def create_dataloaders(config: Config, batch_size: int = None):
@@ -160,21 +184,8 @@ def train(config: Config = None, **kwargs):
     
     # Set seed
     pl.seed_everything(config.training.seed)
-    
-    # Create dataloaders
-    logger.info("Creating dataloaders...")
-    train_loader, val_loader = create_dataloaders(config)
-    
-    # Create Lightning module
-    logger.info("Creating Lightning module...")
-    lightning_module = create_lightning_module(config)
-    
-    # Setup logging
-    logger.info("Setting up logging...")
+
     tb_logger, checkpoint_callback = setup_logging_and_checkpoints(config)
-    
-    # Create trainer
-    logger.info("Creating trainer...")
     trainer = pl.Trainer(
         max_epochs=config.training.max_epochs,
         logger=tb_logger,
@@ -185,8 +196,59 @@ def train(config: Config = None, **kwargs):
         log_every_n_steps=config.training.log_interval,
         enable_progress_bar=True,
     )
-    
-    # Train
+
+    if config.data.cache_dir:
+        # ------------------------------------------------------------------
+        # Two-phase training: extract features once, then train cheaply.
+        # ------------------------------------------------------------------
+        cache_path = Path(config.data.cache_dir) / "pathway_features.pt"
+
+        if not cache_path.exists():
+            # Phase 1 — build the raw dataset + LLM, extract once
+            logger.info("Phase 1: extracting pathway features (one-time cost)...")
+            raw_dataset, collate_fn = _build_raw_dataset_and_collate(config)
+            extraction_model = create_lightning_module(config).sparse_model
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            extraction_model.to(device).eval()
+            extract_and_cache(
+                extraction_model, raw_dataset, collate_fn, cache_path,
+                device=device, batch_size=config.data.batch_size * 2,
+                num_workers=config.data.num_workers,
+            )
+            del extraction_model  # free LLM memory before training
+
+        # Phase 2 — train on cached [N, 6] features; no LLM needed
+        logger.info(f"Phase 2: training on cached features from {cache_path}")
+        cached_dataset = CachedFeaturesDataset(cache_path)
+        use_gpu = torch.cuda.is_available()
+        nw = config.data.num_workers
+        loader_kwargs = dict(
+            num_workers=nw,
+            pin_memory=use_gpu,
+            persistent_workers=(nw > 0),
+            prefetch_factor=2 if nw > 0 else None,
+        )
+        train_size = int(len(cached_dataset) * (1 - config.training.val_split))
+        val_size = len(cached_dataset) - train_size
+        train_ds, val_ds = random_split(
+            cached_dataset, [train_size, val_size],
+            generator=torch.Generator().manual_seed(config.training.seed),
+        )
+        train_loader = DataLoader(train_ds, batch_size=config.data.batch_size,
+                                  shuffle=True, **loader_kwargs)
+        val_loader = DataLoader(val_ds, batch_size=config.data.batch_size,
+                                shuffle=False, **loader_kwargs)
+
+        lightning_module = create_cached_module(config)
+
+    else:
+        # ------------------------------------------------------------------
+        # Original single-phase path: LLM on every training step.
+        # ------------------------------------------------------------------
+        logger.info("Creating dataloaders (LLM on every step — consider --cache-dir)...")
+        train_loader, val_loader = create_dataloaders(config)
+        lightning_module = create_lightning_module(config)
+
     logger.info("Starting training...")
     trainer.fit(lightning_module, train_loader, val_loader)
     
@@ -321,6 +383,19 @@ def main():
             "instead of the built-in synthetic prompts."
         ),
     )
+    parser.add_argument(
+        "--cache-dir",
+        type=str,
+        default=None,
+        help=(
+            "Directory for the pre-extracted pathway feature cache.  "
+            "Enables two-phase training: the LLM runs once to extract "
+            "[N,6] features (Phase 1), then all subsequent epochs train "
+            "only the projector and predictors on the cached tensors (Phase 2), "
+            "making each training step ~100-1000x cheaper.  "
+            "The cache is reused across runs; delete pathway_features.pt to force re-extraction."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -333,6 +408,8 @@ def main():
     config.data.num_prompts = args.num_prompts
     if args.data_dir:
         config.data.narrative_data_dir = args.data_dir
+    if args.cache_dir:
+        config.data.cache_dir = args.cache_dir
     
     if args.skip_training:
         # Just run experiments (assumes models are already trained)

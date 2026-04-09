@@ -37,6 +37,11 @@ class DataConfig:
     # instead of the built-in synthetic prompts.  Path should be the root data
     # directory containing per-subject sub-directories (e.g. /data/EEG).
     narrative_data_dir: Optional[str] = None
+    # Directory for the pre-extracted pathway feature cache.  When set,
+    # main.py runs a two-phase flow: extract features once (Phase 1) then
+    # train the projector/predictors on the cached [N, 6] tensors (Phase 2),
+    # skipping the LLM on every subsequent training step.
+    cache_dir: Optional[str] = None
 
     def __post_init__(self):
         if self.sparsity_levels is None:

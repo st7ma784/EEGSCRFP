@@ -162,3 +162,100 @@ class CausalEEGHypothesisModule(pl.LightningModule):
 
 def create_lightning_module(config: Config) -> CausalEEGHypothesisModule:
     return CausalEEGHypothesisModule(config)
+
+
+# ---------------------------------------------------------------------------
+# Cached variant — no LLM in the training loop
+# ---------------------------------------------------------------------------
+
+class CachedCausalEEGModule(pl.LightningModule):
+    """Train projector + predictors on pre-extracted pathway features.
+
+    Batch items come from ``CachedFeaturesDataset``:
+        ``{'features': [B, 6], 'sparsity_level': [B]}``
+
+    The LLM is not needed here — it was used once during feature extraction.
+    This makes each training step ~100-1000× cheaper than the full module.
+    """
+
+    def __init__(self, config: Config):
+        super().__init__()
+        self.config = config
+
+        self.eeg_projector = EEGProjector(
+            input_dim=6,
+            output_channels=config.projection.output_channels,
+            add_noise=config.projection.add_noise,
+            noise_std=config.projection.noise_std,
+            smoothing_window=config.projection.smoothing_window,
+        )
+        self.pathway_predictor = MLPPredictor(
+            input_dim=6,
+            hidden_dims=config.predictor.hidden_dims,
+            dropout=config.predictor.dropout,
+        )
+        self.eeg_predictor = MLPPredictor(
+            input_dim=config.projection.output_channels,
+            hidden_dims=config.predictor.hidden_dims,
+            dropout=config.predictor.dropout,
+        )
+        self.mse_loss = nn.MSELoss()
+
+    def _step(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        features = batch["features"]                  # [B, 6]
+        sparsity_levels = batch["sparsity_level"]     # [B]
+
+        eeg_signal = self.eeg_projector(features)                          # [B, C]
+        pathway_pred = self.pathway_predictor(features).squeeze(-1)        # [B]
+        eeg_pred = self.eeg_predictor(eeg_signal).squeeze(-1)              # [B]
+
+        pathway_loss = self.mse_loss(pathway_pred, sparsity_levels)
+        eeg_loss = self.mse_loss(eeg_pred, sparsity_levels)
+
+        return {
+            "total_loss": pathway_loss + eeg_loss,
+            "pathway_loss": pathway_loss,
+            "eeg_loss": eeg_loss,
+            "pathway_pred": pathway_pred.detach(),
+            "eeg_pred": eeg_pred.detach(),
+            "sparsity_levels": sparsity_levels.detach(),
+        }
+
+    def training_step(self, batch: Dict[str, torch.Tensor], batch_idx: int) -> torch.Tensor:
+        d = self._step(batch)
+        self.log("train/pathway_loss", d["pathway_loss"], prog_bar=True)
+        self.log("train/eeg_loss", d["eeg_loss"], prog_bar=True)
+        self.log("train/total_loss", d["total_loss"], prog_bar=True)
+        return d["total_loss"]
+
+    def validation_step(self, batch: Dict[str, torch.Tensor], batch_idx: int):
+        d = self._step(batch)
+        self.log("val/pathway_loss", d["pathway_loss"])
+        self.log("val/eeg_loss", d["eeg_loss"])
+        self.log("val/total_loss", d["total_loss"])
+
+        pathway_pred = d["pathway_pred"].cpu().numpy()
+        eeg_pred = d["eeg_pred"].cpu().numpy()
+        sparsity = d["sparsity_levels"].cpu().numpy()
+        if len(pathway_pred) > 1:
+            try:
+                self.log("val/pathway_corr", pearsonr(pathway_pred, sparsity)[0])
+                self.log("val/eeg_corr", pearsonr(eeg_pred, sparsity)[0])
+            except Exception:
+                pass
+
+    def configure_optimizers(self):
+        params = (
+            list(self.eeg_projector.parameters())
+            + list(self.pathway_predictor.parameters())
+            + list(self.eeg_predictor.parameters())
+        )
+        return torch.optim.AdamW(
+            params,
+            lr=self.config.training.learning_rate,
+            weight_decay=self.config.training.weight_decay,
+        )
+
+
+def create_cached_module(config: Config) -> CachedCausalEEGModule:
+    return CachedCausalEEGModule(config)

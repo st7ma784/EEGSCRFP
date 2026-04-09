@@ -36,25 +36,9 @@ class SparseAttentionWrapper(nn.Module):
         else:
             self._sparsify = self._apply_sparsemax
 
-        self._register_attention_hooks()
-
-    # ------------------------------------------------------------------
-    # Attention hooks
-    # ------------------------------------------------------------------
-
-    def _register_attention_hooks(self):
-        """Register forward hooks to capture raw attention weights."""
-        self._attention_data: Dict[str, torch.Tensor] = {}
-
-        def make_hook(name):
-            def hook(module, input, output):
-                if isinstance(output, tuple):
-                    self._attention_data[name] = output[0].detach()
-            return hook
-
-        for name, module in self.model.named_modules():
-            if "attention" in name.lower() and hasattr(module, "dropout"):
-                module.register_forward_hook(make_hook(name))
+        # Attention weights are read from outputs.attentions (output_attentions=True),
+        # which returns post-softmax, post-dropout weights — the tensors that
+        # actually drove the computation.  No hooks needed or registered.
 
     # ------------------------------------------------------------------
     # Sparsity methods
@@ -117,15 +101,18 @@ class SparseAttentionWrapper(nn.Module):
             dict with ``last_hidden_state``, optionally ``hidden_states``
             and ``attention_maps`` (list of L tensors [B, H, S, S]).
         """
-        self._attention_data = {}
-
-        outputs = self.model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            output_attentions=True,
-            output_hidden_states=return_hidden_states,
-            return_dict=True,
-        )
+        # Use fp16 autocast on CUDA to halve memory and increase throughput.
+        # Attention weights are cast back to float32 after the model call so
+        # downstream metric computation stays numerically stable.
+        device_type = "cuda" if input_ids.is_cuda else "cpu"
+        with torch.autocast(device_type=device_type, enabled=input_ids.is_cuda):
+            outputs = self.model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                output_attentions=True,
+                output_hidden_states=return_hidden_states,
+                return_dict=True,
+            )
 
         result: Dict[str, object] = {"last_hidden_state": outputs.last_hidden_state}
 
@@ -133,8 +120,10 @@ class SparseAttentionWrapper(nn.Module):
             result["hidden_states"] = outputs.hidden_states
 
         if return_attention_maps:
-            # Stack all layers → [L, B, H, S, S], process as one batch
-            stacked = torch.stack(outputs.attentions, dim=0)   # [L, B, H, S, S]
+            # Stack all layers → [L, B, H, S, S], process as one batch.
+            # Cast to float32: autocast may have produced fp16 attention weights,
+            # and the metric computations (log, pow, topk) need full precision.
+            stacked = torch.stack(outputs.attentions, dim=0).float()   # [L, B, H, S, S]
             L, B, H, S, _ = stacked.shape
 
             # Merge L and B into one batch dim for a single kernel dispatch
