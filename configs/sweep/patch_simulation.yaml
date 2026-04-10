@@ -1,0 +1,61 @@
+# Sweep: EEG simulation fidelity — patch count and geometry
+#
+# Tests how prediction accuracy degrades as fewer patches (virtual electrodes)
+# are available.  This is the sensor count experiment run as a sweep so that
+# W&B tracks every (M, depth, heads_per_patch) combination.
+#
+# Primary metric: sensor_count/task_auroc at the given M
+# Secondary: sensor_count/vividness_r2
+#
+# Run:
+#   wandb sweep configs/sweep/patch_simulation.yaml
+#   wandb agent <sweep-id>
+
+program: experiments/sensor_count.py
+project: eegscrfp
+name: patch-simulation-sweep
+method: grid   # exhaustive: we want every M × geometry combination
+metric:
+  name: sensor_count/max_auroc
+  goal: maximize
+
+parameters:
+  # ── Patch geometry ────────────────────────────────────────────────────────
+  # patch_depth: how many consecutive layers per patch
+  # heads_per_patch: how many attention heads per patch
+  # These determine full_coverage_count:
+  #   GPT-2 (12L, 12H): depth=3, h=4 → 12 patches; depth=2, h=3 → 24 patches
+  patch_depth:
+    values: [1, 2, 3, 4]
+    # depth=1 → single-layer patches (max spatial resolution)
+    # depth=3 → 12 patches for GPT-2; depth=1 → 144 patches (128+ electrode regime)
+
+  heads_per_patch:
+    values: [1, 2, 3, 4, 6]
+    # heads=1 → each head is its own patch; heads=4 → coarse grouping
+    # depth=1, heads=1: GPT-2=144, gpt2-medium=384, gpt2-large=720 patches
+
+  # ── Alpha (IS intensity) at feature extraction ────────────────────────────
+  # Run at dense (1.0), near-threshold (0.25), and sparse (0.1) to see how
+  # the degradation curve shifts with routing quality.
+  alpha:
+    values: [1.0, 0.25, 0.1]
+
+  # ── Number of random subsets per M value ─────────────────────────────────
+  # Higher = more stable degradation curve estimates
+  n_repeats:
+    value: 5
+
+  # ── Model ────────────────────────────────────────────────────────────────
+  model_name:
+    values: [gpt2, gpt2-medium]   # also test on larger model
+
+  # ── Data ─────────────────────────────────────────────────────────────────
+  # data_dir is intentionally NOT a sweep parameter — it is an environment-
+  # specific path set via EEGSCRFP_DATA_DIR on each HEC node.
+  batch_size:
+    value: 16
+
+  # ── Output ───────────────────────────────────────────────────────────────
+  wandb_project:
+    value: eegscrfp

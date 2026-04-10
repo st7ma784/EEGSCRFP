@@ -1,0 +1,16 @@
+wandb_version: 1
+
+alpha:
+  value: 1
+batch_size:
+  value: 16
+heads_per_patch:
+  value: 1
+model_name:
+  value: gpt2
+n_repeats:
+  value: 5
+patch_depth:
+  value: 1
+wandb_project:
+  value: eegscrfp

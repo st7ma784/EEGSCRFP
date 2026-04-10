@@ -1,0 +1,38 @@
+wandb_version: 1
+
+alpha:
+  value: 1
+batch_size:
+  value: 64
+dropout:
+  value: 0.1
+embed_dim:
+  value: 256
+encoder_type:
+  value: transformer
+heads_per_patch:
+  value: 1
+hidden_dim:
+  value: 256
+lora_rank:
+  value: 2
+lora_target_modules:
+  value: qv
+lr:
+  value: 0.001
+max_epochs:
+  value: 50
+model_name:
+  value: gpt2
+n_attn_heads:
+  value: 4
+n_cv_folds:
+  value: 5
+n_hidden_layers:
+  value: 2
+n_total_participants:
+  value: 10
+patch_depth:
+  value: 1
+test_fraction:
+  value: 0.25

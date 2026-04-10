@@ -1,0 +1,36 @@
+wandb_version: 1
+
+batch_size:
+  value: 64
+dropout:
+  value: 0.2
+embed_dim:
+  value: 128
+encoder_type:
+  value: transformer
+heads_per_patch:
+  value: 1
+hidden_dim:
+  value: 256
+lr:
+  value: 0.004156289055200915
+max_epochs:
+  value: 100
+model_name:
+  value: gpt2
+n_attn_heads:
+  value: 2
+n_cv_folds:
+  value: 5
+n_hidden_layers:
+  value: 4
+objective_alpha_weight:
+  value: 0
+objective_recon_weight:
+  value: 0.5
+objective_task_weight:
+  value: 0.5
+patch_depth:
+  value: 1
+weight_decay:
+  value: 0.0017070072111117036

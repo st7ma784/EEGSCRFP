@@ -30,6 +30,9 @@ class EEGProjector(nn.Module):
         self.output_channels = output_channels
         self.noise_std = noise_std
 
+        # Normalise pathway features before projection — the 6 metrics span
+        # very different scales, which causes scale blow-up and sign ambiguity.
+        self.input_norm = nn.BatchNorm1d(input_dim)
         self.projection = nn.Linear(input_dim, output_channels, bias=True)
         nn.init.xavier_uniform_(self.projection.weight)
         nn.init.zeros_(self.projection.bias)
@@ -81,7 +84,7 @@ class EEGProjector(nn.Module):
         Returns:
             [B, output_channels]
         """
-        x = self.projection(pathway_features)
+        x = self.projection(self.input_norm(pathway_features))
         x = self._noise_fn(x)
         x = self._smooth_fn(x)
         return x

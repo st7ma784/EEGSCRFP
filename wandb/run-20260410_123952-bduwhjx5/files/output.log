@@ -1,0 +1,64 @@
+2026-04-10 12:39:53,618  INFO  W&B config synced: {'model_name': 'gpt2', 'data_dir': None, 'num_prompts': 60, 'cache_dir': 'outputs', 'no_cache': False, 'patch_depth': 1, 'heads_per_patch': 1, 'alpha': 1, 'encoder_type': 'transformer', 'embed_dim': 128, 'hidden_dim': 256, 'n_hidden_layers': 4, 'n_attn_heads': 2, 'dropout': 0.2, 'lr': 0.004156289055200915, 'weight_decay': 0.0017070072111117036, 'batch_size': 64, 'max_epochs': 100, 'n_cv_folds': 5, 'objective_task_weight': 0.5, 'objective_recon_weight': 0.5, 'objective_alpha_weight': 0, 'wandb_project': None}
+2026-04-10 12:39:53,618  INFO  Using 60 synthetic prompts
+2026-04-10 12:39:53,618  INFO  Extracting features (no cache found or --no-cache set)...
+2026-04-10 12:39:53,809  INFO  HTTP Request: HEAD https://huggingface.co/gpt2/resolve/main/config.json "HTTP/1.1 200 OK"
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 2718.06it/s, Materializing param=wte.weight]             
+[1mGPT2Model LOAD REPORT[0m from: gpt2
+Key                  | Status     |  |
+---------------------+------------+--+-
+h.{0...11}.attn.bias | UNEXPECTED |  |
+
+[3mNotes:
+- UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
+2026-04-10 12:39:54,189  INFO  HTTP Request: HEAD https://huggingface.co/gpt2/resolve/main/config.json "HTTP/1.1 200 OK"
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-04-10 12:39:54,189  WARNING  Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-04-10 12:39:54,292  INFO  HTTP Request: HEAD https://huggingface.co/gpt2/resolve/main/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-10 12:39:54,392  INFO  HTTP Request: GET https://huggingface.co/api/models/gpt2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:39:54,493  INFO  HTTP Request: GET https://huggingface.co/api/models/openai-community/gpt2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-10 12:39:54,594  INFO  HTTP Request: GET https://huggingface.co/api/models/gpt2/tree/main?recursive=true&expand=false "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:39:54,699  INFO  HTTP Request: GET https://huggingface.co/api/models/openai-community/gpt2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-10 12:39:55,211  INFO  HTTP Request: HEAD https://huggingface.co/gpt2/resolve/main/config.json "HTTP/1.1 200 OK"
+2026-04-10 12:39:55,314  INFO  HTTP Request: HEAD https://huggingface.co/gpt2/resolve/main/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-10 12:39:55,413  INFO  HTTP Request: GET https://huggingface.co/api/models/gpt2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:39:55,517  INFO  HTTP Request: GET https://huggingface.co/api/models/openai-community/gpt2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-10 12:39:55,637  INFO  HTTP Request: GET https://huggingface.co/api/models/gpt2/tree/main?recursive=true&expand=false "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:39:55,742  INFO  HTTP Request: GET https://huggingface.co/api/models/openai-community/gpt2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-10 12:39:55,926  INFO  Collecting features: 60 prompts × 5 alpha levels → 300 samples
+2026-04-10 12:39:55,927  INFO  Patch config: depth=1, heads=1, M=144
+2026-04-10 12:39:56,545  INFO  Calibrated extractor: reference shape torch.Size([144, 11, 11])
+2026-04-10 12:39:56,671  INFO  Feature extraction: 0.7s
+2026-04-10 12:39:56,674  INFO  Features cached to outputs/patch_features_gpt2_d1_h1_p60.pt
+2026-04-10 12:39:56,705  INFO  No task labels found — using alpha bucket as synthetic task proxy
+2026-04-10 12:39:56,705  INFO
+Training transformer encoder (embed_dim=128, depth=4)...
+2026-04-10 12:39:56,710  INFO  Dataset: N=300, M=144, S=11, d_model=768, n_classes=5
+2026-04-10 12:39:56,711  INFO    Fold 1/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-10 12:40:02,949  INFO      AUROC=0.911  cos=0.998  R²=-0.000
+2026-04-10 12:40:02,950  INFO    Fold 2/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-10 12:40:09,062  INFO      AUROC=0.920  cos=0.998  R²=-0.003
+2026-04-10 12:40:09,062  INFO    Fold 3/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-10 12:40:15,143  INFO      AUROC=0.904  cos=0.998  R²=-0.025
+2026-04-10 12:40:15,143  INFO    Fold 4/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-10 12:40:21,492  INFO      AUROC=0.905  cos=0.999  R²=-0.013
+2026-04-10 12:40:21,493  INFO    Fold 5/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-10 12:40:27,474  INFO      AUROC=0.904  cos=0.998  R²=-0.000
+2026-04-10 12:40:27,476  INFO
+============================================================
+2026-04-10 12:40:27,476  INFO  ENCODER TRAINING — RESULTS
+2026-04-10 12:40:27,476  INFO    Encoder type : transformer
+2026-04-10 12:40:27,476  INFO    Elapsed      : 30.8s
+2026-04-10 12:40:27,477  INFO    Task AUROC   : 0.909  (target >0.70)
+2026-04-10 12:40:27,477  INFO    Recon cosine : 0.998  (target >0.60)
+2026-04-10 12:40:27,477  INFO    Alpha R²     : -0.008  (target >0.80)
+2026-04-10 12:40:27,477  INFO  ============================================================

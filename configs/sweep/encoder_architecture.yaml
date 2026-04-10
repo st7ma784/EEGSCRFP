@@ -1,0 +1,92 @@
+# Sweep: Transformer encoder architecture — Phase 4
+#
+# Encoder fixed to "transformer" (PatchTokenEncoder): M patches as tokens,
+# each patch's S token-position profile projected to embed_dim, CLS pool.
+# Input: [B, M=144, S] from forward_temporal() at depth=1, heads=1.
+#
+# Features are cached after first extraction — all subsequent trials reuse
+# the cache so only the small encoder trains (no LLM on the critical path).
+#
+# Primary metric: encoder/task_auroc   (target >0.70)
+# Secondary:      encoder/recon_cosine (target >0.60)
+# Control:        encoder/alpha_r2     (target >0.80; should be easy)
+#
+# Run locally:
+#   cd EEGSCRFP
+#   wandb sweep configs/sweep/encoder_architecture.yaml   # prints SWEEP_ID
+#   wandb agent --count 10 <SWEEP_ID>
+#
+# On HEC:
+#   ./scripts/hc_sweep_launch.sh encoder --agents 10 --count 2
+
+program: experiments/train_encoder.py
+project: eegscrfp
+name: phase4-transformer-encoder
+method: bayes
+metric:
+  name: encoder/task_auroc
+  goal: maximize
+
+parameters:
+  # ── Encoder ───────────────────────────────────────────────────────────────
+  encoder_type:
+    value: transformer   # fixed: PatchTokenEncoder
+
+  # Transformer depth (number of TransformerEncoderLayer blocks)
+  n_hidden_layers:
+    values: [1, 2, 3, 4]
+
+  # Embedding / hidden dimension (must be divisible by n_attn_heads)
+  embed_dim:
+    values: [64, 128, 256, 512]
+
+  hidden_dim:
+    value: 256   # unused by transformer; kept for CLI compatibility
+
+  # Self-attention heads over the M-patch sequence
+  n_attn_heads:
+    values: [2, 4, 8]
+
+  # ── Training objectives ────────────────────────────────────────────────────
+  objective_task_weight:
+    values: [1.0, 0.5, 2.0]
+
+  objective_recon_weight:
+    values: [0.0, 0.5, 1.0]
+
+  objective_alpha_weight:
+    values: [0.0, 0.1, 0.5]
+
+  # ── Regularisation ────────────────────────────────────────────────────────
+  dropout:
+    values: [0.0, 0.1, 0.2, 0.3]
+
+  weight_decay:
+    distribution: log_uniform_values
+    min: 1.0e-5
+    max: 1.0e-2
+
+  # ── Optimisation ─────────────────────────────────────────────────────────
+  lr:
+    distribution: log_uniform_values
+    min: 5.0e-5
+    max: 5.0e-3
+
+  batch_size:
+    values: [32, 64, 128]
+
+  max_epochs:
+    value: 100
+
+  # ── Patch config ──────────────────────────────────────────────────────────
+  patch_depth:
+    value: 1      # one layer per patch → 144 patches for GPT-2
+
+  heads_per_patch:
+    value: 1      # one head per patch → maximum resolution
+
+  model_name:
+    value: gpt2
+
+  n_cv_folds:
+    value: 5

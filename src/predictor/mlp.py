@@ -33,10 +33,12 @@ class MLPPredictor(nn.Module):
         self.output_dim = output_dim
         self.dropout_rate = dropout
         
-        # Build layers
-        layers = []
+        # Build layers — BatchNorm on input normalises across the wildly
+        # different scales of the 6 pathway metrics (routing_sparsity can be
+        # O(100s), path_efficiency is in [0,1], etc.)
+        layers = [nn.BatchNorm1d(input_dim)]
         prev_dim = input_dim
-        
+
         for hidden_dim in hidden_dims:
             layers.append(nn.Linear(prev_dim, hidden_dim))
             layers.append(nn.ReLU())

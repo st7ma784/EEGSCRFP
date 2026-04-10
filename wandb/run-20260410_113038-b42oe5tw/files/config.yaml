@@ -1,0 +1,128 @@
+_wandb:
+    value:
+        cli_version: 0.22.3
+        code_path: code/experiments/train_encoder.py
+        e:
+            4jin7bcstjsjlbxi1zzhqxcx1xlb4qi7:
+                args:
+                    - --batch-size=128
+                    - --dropout=0
+                    - --embed-dim=128
+                    - --encoder-type=transformer
+                    - --heads-per-patch=1
+                    - --hidden-dim=256
+                    - --lr=0.0019634929829786076
+                    - --max-epochs=100
+                    - --model-name=gpt2
+                    - --n-attn-heads=4
+                    - --n-cv-folds=5
+                    - --n-hidden-layers=1
+                    - --objective-alpha-weight=0.1
+                    - --objective-recon-weight=0.5
+                    - --objective-task-weight=0.5
+                    - --patch-depth=1
+                    - --weight-decay=2.6318561572754147e-05
+                codePath: experiments/train_encoder.py
+                codePathLocal: experiments/train_encoder.py
+                cpu_count: 8
+                cpu_count_logical: 16
+                cudaVersion: "13.1"
+                disk:
+                    /:
+                        total: "982240026624"
+                        used: "875988545536"
+                email: s.mander3@lancaster.ac.uk
+                executable: /home/user/miniconda3/envs/opence/bin/python
+                git:
+                    commit: 9a8108d457bbe24c4a7672f7d6e8f70b920ee712
+                    remote: https://github.com/st7ma784/EEGSCRFP.git
+                gpu: NVIDIA GeForce RTX 3090
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Ampere
+                      cudaCores: 10496
+                      memoryTotal: "25769803776"
+                      name: NVIDIA GeForce RTX 3090
+                      uuid: GPU-a0725968-8381-3016-a5f7-89b8dc706596
+                host: scc-ws-01
+                memory:
+                    total: "33591480320"
+                os: Linux-6.17.0-19-generic-x86_64-with-glibc2.39
+                program: /home/user/EEGViewer/EEGSCRFP/experiments/train_encoder.py
+                python: CPython 3.10.19
+                root: /home/user/EEGViewer/EEGSCRFP
+                startedAt: "2026-04-10T10:30:38.253678Z"
+                writerId: 4jin7bcstjsjlbxi1zzhqxcx1xlb4qi7
+        m: []
+        python_version: 3.10.19
+        t:
+            "1":
+                - 1
+                - 5
+                - 11
+                - 49
+                - 53
+            "2":
+                - 1
+                - 5
+                - 11
+                - 41
+                - 49
+                - 53
+            "3":
+                - 2
+                - 13
+                - 14
+                - 16
+                - 62
+            "4": 3.10.19
+            "5": 0.22.3
+            "6": 5.1.0
+            "12": 0.22.3
+            "13": linux-x86_64
+alpha:
+    value: 1
+batch_size:
+    value: 128
+cache_dir:
+    value: outputs/features
+data_dir:
+    value: null
+dropout:
+    value: 0
+embed_dim:
+    value: 128
+encoder_type:
+    value: transformer
+heads_per_patch:
+    value: 1
+hidden_dim:
+    value: 256
+lr:
+    value: 0.0019634929829786076
+max_epochs:
+    value: 100
+model_name:
+    value: gpt2
+n_attn_heads:
+    value: 4
+n_cv_folds:
+    value: 5
+n_hidden_layers:
+    value: 1
+no_cache:
+    value: false
+num_prompts:
+    value: 60
+objective_alpha_weight:
+    value: 0.1
+objective_recon_weight:
+    value: 0.5
+objective_task_weight:
+    value: 0.5
+patch_depth:
+    value: 1
+wandb_project:
+    value: null
+weight_decay:
+    value: 2.6318561572754147e-05

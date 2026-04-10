@@ -1,0 +1,46 @@
+2026-04-10 12:41:50,095  INFO  W&B config synced: {'model_name': 'gpt2', 'data_dir': None, 'num_prompts': 60, 'cache_dir': 'outputs', 'no_cache': False, 'patch_depth': 1, 'heads_per_patch': 1, 'alpha': 1, 'encoder_type': 'transformer', 'embed_dim': 256, 'hidden_dim': 256, 'n_hidden_layers': 4, 'n_attn_heads': 2, 'dropout': 0.2, 'lr': 0.002843901241820471, 'weight_decay': 0.0017137989210950083, 'batch_size': 128, 'max_epochs': 100, 'n_cv_folds': 5, 'objective_task_weight': 2, 'objective_recon_weight': 0.5, 'objective_alpha_weight': 0, 'wandb_project': None}
+2026-04-10 12:41:50,096  INFO  Using 60 synthetic prompts
+2026-04-10 12:41:50,096  INFO  Loading cached features from outputs/patch_features_gpt2_d1_h1_p60.pt
+2026-04-10 12:41:50,098  INFO    M=144, S_max=11, N=300
+2026-04-10 12:41:50,098  INFO  No task labels found — using alpha bucket as synthetic task proxy
+2026-04-10 12:41:50,098  INFO
+Training transformer encoder (embed_dim=256, depth=4)...
+2026-04-10 12:41:50,103  INFO  Dataset: N=300, M=144, S=11, d_model=768, n_classes=5
+2026-04-10 12:41:50,105  INFO    Fold 1/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-10 12:41:59,443  INFO      AUROC=0.748  cos=0.999  R²=-0.000
+2026-04-10 12:41:59,443  INFO    Fold 2/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-10 12:42:08,329  INFO      AUROC=0.923  cos=0.998  R²=-0.003
+2026-04-10 12:42:08,330  INFO    Fold 3/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-10 12:42:17,306  INFO      AUROC=0.901  cos=0.998  R²=-0.025
+2026-04-10 12:42:17,306  INFO    Fold 4/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+Traceback (most recent call last):
+  File "/home/user/EEGViewer/EEGSCRFP/experiments/train_encoder.py", line 752, in <module>
+    main()
+  File "/home/user/EEGViewer/EEGSCRFP/experiments/train_encoder.py", line 707, in main
+    results = train_encoder_cv(
+  File "/home/user/EEGViewer/EEGSCRFP/experiments/train_encoder.py", line 468, in train_encoder_cv
+    xb, tt, tl, av = xb.to(device), tt.to(device), tl.to(device), av.to(device)
+RuntimeError: CUDA error: unspecified launch failure
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+Traceback (most recent call last):
+  File "/home/user/EEGViewer/EEGSCRFP/experiments/train_encoder.py", line 752, in <module>
+    main()
+  File "/home/user/EEGViewer/EEGSCRFP/experiments/train_encoder.py", line 707, in main
+    results = train_encoder_cv(
+  File "/home/user/EEGViewer/EEGSCRFP/experiments/train_encoder.py", line 468, in train_encoder_cv
+    xb, tt, tl, av = xb.to(device), tt.to(device), tl.to(device), av.to(device)
+RuntimeError: CUDA error: unspecified launch failure
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.

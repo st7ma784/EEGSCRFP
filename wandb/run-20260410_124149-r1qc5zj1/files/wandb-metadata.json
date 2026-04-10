@@ -1,0 +1,59 @@
+{
+  "os":  "Linux-6.17.0-19-generic-x86_64-with-glibc2.39",
+  "python":  "CPython 3.10.19",
+  "startedAt":  "2026-04-10T11:41:49.203181Z",
+  "args":  [
+    "--batch-size=128",
+    "--dropout=0.2",
+    "--embed-dim=256",
+    "--encoder-type=transformer",
+    "--heads-per-patch=1",
+    "--hidden-dim=256",
+    "--lr=0.002843901241820471",
+    "--max-epochs=100",
+    "--model-name=gpt2",
+    "--n-attn-heads=2",
+    "--n-cv-folds=5",
+    "--n-hidden-layers=4",
+    "--objective-alpha-weight=0",
+    "--objective-recon-weight=0.5",
+    "--objective-task-weight=2",
+    "--patch-depth=1",
+    "--weight-decay=0.0017137989210950083"
+  ],
+  "program":  "/home/user/EEGViewer/EEGSCRFP/experiments/train_encoder.py",
+  "codePath":  "experiments/train_encoder.py",
+  "codePathLocal":  "experiments/train_encoder.py",
+  "git":  {
+    "remote":  "https://github.com/st7ma784/EEGSCRFP.git",
+    "commit":  "9a8108d457bbe24c4a7672f7d6e8f70b920ee712"
+  },
+  "email":  "s.mander3@lancaster.ac.uk",
+  "root":  "/home/user/EEGViewer/EEGSCRFP",
+  "host":  "scc-ws-01",
+  "executable":  "/home/user/miniconda3/envs/opence/bin/python",
+  "cpu_count":  8,
+  "cpu_count_logical":  16,
+  "gpu":  "NVIDIA GeForce RTX 3090",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "982240026624",
+      "used":  "876004114432"
+    }
+  },
+  "memory":  {
+    "total":  "33591480320"
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA GeForce RTX 3090",
+      "memoryTotal":  "25769803776",
+      "cudaCores":  10496,
+      "architecture":  "Ampere",
+      "uuid":  "GPU-a0725968-8381-3016-a5f7-89b8dc706596"
+    }
+  ],
+  "cudaVersion":  "13.1",
+  "writerId":  "g1y3t8ww6jfbutxpj1mm8vu4fldtqnn8"
+}

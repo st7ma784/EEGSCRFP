@@ -1,0 +1,88 @@
+# Sweep: Training objective ablation
+#
+# Holds encoder architecture constant (transformer, depth=1, h=1 → 144 patches)
+# and varies the blend of the three training objectives:
+#   Objective A (task):  predict condition label    weight: w_task
+#   Objective B (recon): reconstruct prompt tokens  weight: w_recon
+#   Objective C (alpha): predict sparsity level     weight: w_alpha
+#
+# Questions this sweep answers:
+#   1. Does adding recon (B) improve task prediction (A)?
+#      If yes → reconstruction acts as a useful auxiliary objective.
+#   2. Does adding alpha (C) hurt task prediction?
+#      If yes → alpha-dominated features interfere with content features.
+#   3. Is multi-objective better than task-only?
+#
+# Primary metric: encoder/task_auroc (we care most about task prediction)
+# Secondary: encoder/recon_cosine_sim, encoder/alpha_r2
+#
+# Run locally:
+#   cd EEGSCRFP
+#   wandb sweep configs/sweep/training_objectives.yaml
+#   wandb agent <sweep-id>
+#
+# On HEC:
+#   ./scripts/hc_sweep_launch.sh objectives --agents 8 --count 4
+
+program: experiments/train_encoder.py
+project: eegscrfp
+name: training-objectives-sweep
+method: grid   # all combinations of objective weights
+metric:
+  name: encoder/task_auroc
+  goal: maximize
+
+parameters:
+  # ── Objective weights ────────────────────────────────────────────────────
+  # Include 0.0 to test ablating each objective entirely.
+  objective_task_weight:
+    values: [0.0, 0.5, 1.0, 2.0]
+
+  objective_recon_weight:
+    values: [0.0, 0.25, 0.5, 1.0]
+
+  objective_alpha_weight:
+    values: [0.0, 0.1, 0.5, 1.0]
+
+  # ── Encoder (fixed — use best from encoder_architecture sweep) ───────────
+  encoder_type:
+    value: transformer
+
+  embed_dim:
+    value: 256
+
+  hidden_dim:
+    value: 256   # unused by transformer; kept for CLI compatibility
+
+  n_hidden_layers:
+    value: 2
+
+  n_attn_heads:
+    value: 4
+
+  dropout:
+    value: 0.1
+
+  # ── Patch config ──────────────────────────────────────────────────────────
+  patch_depth:
+    value: 1      # one layer per patch → 144 patches for GPT-2
+
+  heads_per_patch:
+    value: 1      # one head per patch → maximum resolution
+
+  # ── Optimisation ─────────────────────────────────────────────────────────
+  lr:
+    value: 1.0e-3
+
+  batch_size:
+    value: 64
+
+  max_epochs:
+    value: 100
+
+  # ── Data ─────────────────────────────────────────────────────────────────
+  model_name:
+    value: gpt2
+
+  n_cv_folds:
+    value: 5

@@ -1,0 +1,94 @@
+# Sweep: LoRA participant generalisation
+#
+# Creates N_participants synthetic "participants" by applying LoRA with
+# varying rank to GPT-2.  Trains an encoder on a subset of participants
+# and tests generalisation to held-out variants.
+#
+# The key question: does cross-participant AUROC decrease as LoRA rank
+# increases (more diverse routing)?  If the drop is small, the encoder
+# has learned participant-invariant features.
+#
+# Metrics:
+#   lora/within_auroc     — upper bound (train and test same variant)
+#   lora/cross_auroc      — generalisation
+#   lora/auroc_drop       — within - cross; target < 0.10
+#
+# NOTE: experiments/lora_participants.py is not yet implemented.
+#       This config is a placeholder for future work.
+#
+# Run:
+#   wandb sweep configs/sweep/lora_participants.yaml
+#   wandb agent <sweep-id>
+
+program: experiments/lora_participants.py
+project: eegscrfp
+name: lora-participants-sweep
+method: bayes
+metric:
+  name: lora/cross_auroc
+  goal: maximize
+
+parameters:
+  # ── LoRA configuration ────────────────────────────────────────────────────
+  # rank=0 means base GPT-2 (no LoRA) — used as control
+  lora_rank:
+    values: [0, 2, 4, 8, 16, 32]
+
+  # Which attention projection layers to apply LoRA to
+  # qv: q+v projections (routing layers — most effect on attention patterns)
+  # all: q,k,v,o projections
+  lora_target_modules:
+    values: [qv, all]
+
+  # ── Participant split ─────────────────────────────────────────────────────
+  n_total_participants:
+    values: [10, 20, 40]
+
+  # Fraction of participants held out for cross-participant test
+  test_fraction:
+    value: 0.25
+
+  # ── Feature extraction ────────────────────────────────────────────────────
+  patch_depth:
+    value: 1      # one layer per patch → 144 patches for GPT-2
+
+  heads_per_patch:
+    value: 1      # one head per patch → maximum resolution
+
+  alpha:
+    value: 1.0
+
+  # ── Encoder (use best from encoder_architecture sweep) ───────────────────
+  encoder_type:
+    value: transformer
+
+  embed_dim:
+    value: 256
+
+  hidden_dim:
+    value: 256   # unused by transformer; kept for CLI compatibility
+
+  n_hidden_layers:
+    value: 2
+
+  n_attn_heads:
+    value: 4
+
+  dropout:
+    value: 0.1
+
+  lr:
+    value: 1.0e-3
+
+  batch_size:
+    value: 64
+
+  max_epochs:
+    value: 50
+
+  # ── Data ─────────────────────────────────────────────────────────────────
+  model_name:
+    value: gpt2
+
+  n_cv_folds:
+    value: 5
