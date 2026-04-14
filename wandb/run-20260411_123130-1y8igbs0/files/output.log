@@ -1,0 +1,37 @@
+2026-04-11 12:31:31,677  INFO  W&B config synced: {'model_name': 'gpt2', 'data_dir': None, 'num_prompts': 60, 'cache_dir': 'outputs', 'no_cache': False, 'patch_depth': 1, 'heads_per_patch': 1, 'alpha': 1, 'encoder_type': 'transformer', 'embed_dim': 256, 'hidden_dim': 256, 'n_hidden_layers': 2, 'n_attn_heads': 2, 'dropout': 0, 'lr': 0.00099215370476914, 'weight_decay': 4.038534555755918e-05, 'batch_size': 64, 'max_epochs': 100, 'n_cv_folds': 5, 'objective_task_weight': 2, 'objective_recon_weight': 1, 'objective_alpha_weight': 0.1, 'wandb_project': None}
+2026-04-11 12:31:31,677  INFO  Using 60 synthetic prompts
+2026-04-11 12:31:31,677  INFO  Loading cached features from outputs/patch_features_gpt2_d1_h1_p60.pt
+2026-04-11 12:31:31,679  INFO    M=144, S_max=11, N=300
+2026-04-11 12:31:31,680  INFO  No task labels found — using alpha bucket as synthetic task proxy
+2026-04-11 12:31:31,680  INFO
+Training transformer encoder (embed_dim=256, depth=2)...
+2026-04-11 12:31:31,685  INFO  Dataset: N=300, M=144, S=11, d_model=768, n_classes=5
+2026-04-11 12:31:31,686  INFO    Fold 1/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-11 12:34:45,509  INFO      AUROC=0.907  cos=0.999  R²=0.994
+2026-04-11 12:34:45,509  INFO    Fold 2/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-11 12:37:37,306  INFO      AUROC=0.826  cos=0.999  R²=0.995
+2026-04-11 12:37:37,307  INFO    Fold 3/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-11 12:40:51,341  INFO      AUROC=0.897  cos=0.999  R²=0.992
+2026-04-11 12:40:51,342  INFO    Fold 4/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-11 12:44:10,851  INFO      AUROC=0.904  cos=0.999  R²=0.988
+2026-04-11 12:44:10,851  INFO    Fold 5/5 — train=240, val=60
+/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+2026-04-11 12:47:06,016  INFO      AUROC=0.902  cos=0.999  R²=0.991
+2026-04-11 12:47:06,024  INFO
+============================================================
+2026-04-11 12:47:06,024  INFO  ENCODER TRAINING — RESULTS
+2026-04-11 12:47:06,024  INFO    Encoder type : transformer
+2026-04-11 12:47:06,024  INFO    Elapsed      : 934.3s
+2026-04-11 12:47:06,024  INFO    Task AUROC   : 0.887  (target >0.70)
+2026-04-11 12:47:06,024  INFO    Recon cosine : 0.999  (target >0.60)
+2026-04-11 12:47:06,024  INFO    Alpha R²     : 0.992  (target >0.80)
+2026-04-11 12:47:06,024  INFO  ============================================================

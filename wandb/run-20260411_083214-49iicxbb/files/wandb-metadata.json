@@ -1,0 +1,47 @@
+{
+  "os":  "Linux-6.17.0-19-generic-x86_64-with-glibc2.39",
+  "python":  "CPython 3.10.19",
+  "startedAt":  "2026-04-11T07:32:14.351393Z",
+  "args":  [
+    "--batch-size=64",
+    "--dropout=0",
+    "--embed-dim=128",
+    "--encoder-type=transformer",
+    "--heads-per-patch=1",
+    "--hidden-dim=256",
+    "--lr=0.0003855169787171883",
+    "--max-epochs=100",
+    "--model-name=gpt2",
+    "--n-attn-heads=2",
+    "--n-cv-folds=5",
+    "--n-hidden-layers=1",
+    "--objective-alpha-weight=0",
+    "--objective-recon-weight=0",
+    "--objective-task-weight=2",
+    "--patch-depth=1",
+    "--weight-decay=0.004320700101511318"
+  ],
+  "program":  "/home/user/EEGViewer/EEGSCRFP/experiments/train_encoder.py",
+  "codePath":  "experiments/train_encoder.py",
+  "codePathLocal":  "experiments/train_encoder.py",
+  "git":  {
+    "remote":  "https://github.com/st7ma784/EEGSCRFP.git",
+    "commit":  "dc31b6843bd80e4a5d7c6636df26eb56fa4e83c5"
+  },
+  "email":  "s.mander3@lancaster.ac.uk",
+  "root":  "/home/user/EEGViewer/EEGSCRFP",
+  "host":  "scc-ws-01",
+  "executable":  "/home/user/miniconda3/envs/opence/bin/python",
+  "cpu_count":  8,
+  "cpu_count_logical":  16,
+  "disk":  {
+    "/":  {
+      "total":  "982240026624",
+      "used":  "876204068864"
+    }
+  },
+  "memory":  {
+    "total":  "33591480320"
+  },
+  "writerId":  "hz7wg2t6ntv4avv6b6cat6bxlzckc8cw"
+}

@@ -1,0 +1,118 @@
+_wandb:
+    value:
+        cli_version: 0.22.3
+        code_path: code/experiments/train_encoder.py
+        e:
+            4uysm6ed9qu38u5wcx6n1thvt34i8j78:
+                args:
+                    - --batch-size=64
+                    - --dropout=0.2
+                    - --embed-dim=512
+                    - --encoder-type=transformer
+                    - --heads-per-patch=1
+                    - --hidden-dim=256
+                    - --lr=0.0003022805182887929
+                    - --max-epochs=100
+                    - --model-name=gpt2
+                    - --n-attn-heads=4
+                    - --n-cv-folds=5
+                    - --n-hidden-layers=3
+                    - --objective-alpha-weight=0.1
+                    - --objective-recon-weight=1
+                    - --objective-task-weight=1
+                    - --patch-depth=1
+                    - --weight-decay=0.0010403711077323333
+                codePath: experiments/train_encoder.py
+                codePathLocal: experiments/train_encoder.py
+                cpu_count: 8
+                cpu_count_logical: 16
+                disk:
+                    /:
+                        total: "982240026624"
+                        used: "876210782208"
+                email: s.mander3@lancaster.ac.uk
+                executable: /home/user/miniconda3/envs/opence/bin/python
+                git:
+                    commit: dc31b6843bd80e4a5d7c6636df26eb56fa4e83c5
+                    remote: https://github.com/st7ma784/EEGSCRFP.git
+                host: scc-ws-01
+                memory:
+                    total: "33591480320"
+                os: Linux-6.17.0-19-generic-x86_64-with-glibc2.39
+                program: /home/user/EEGViewer/EEGSCRFP/experiments/train_encoder.py
+                python: CPython 3.10.19
+                root: /home/user/EEGViewer/EEGSCRFP
+                startedAt: "2026-04-11T03:23:37.211822Z"
+                writerId: 4uysm6ed9qu38u5wcx6n1thvt34i8j78
+        m: []
+        python_version: 3.10.19
+        t:
+            "1":
+                - 1
+                - 5
+                - 11
+                - 49
+                - 53
+            "2":
+                - 1
+                - 5
+                - 11
+                - 49
+                - 53
+            "3":
+                - 2
+                - 13
+                - 14
+                - 16
+                - 62
+            "4": 3.10.19
+            "5": 0.22.3
+            "6": 5.1.0
+            "12": 0.22.3
+            "13": linux-x86_64
+alpha:
+    value: 1
+batch_size:
+    value: 64
+cache_dir:
+    value: outputs
+data_dir:
+    value: null
+dropout:
+    value: 0.2
+embed_dim:
+    value: 512
+encoder_type:
+    value: transformer
+heads_per_patch:
+    value: 1
+hidden_dim:
+    value: 256
+lr:
+    value: 0.0003022805182887929
+max_epochs:
+    value: 100
+model_name:
+    value: gpt2
+n_attn_heads:
+    value: 4
+n_cv_folds:
+    value: 5
+n_hidden_layers:
+    value: 3
+no_cache:
+    value: false
+num_prompts:
+    value: 60
+objective_alpha_weight:
+    value: 0.1
+objective_recon_weight:
+    value: 1
+objective_task_weight:
+    value: 1
+patch_depth:
+    value: 1
+wandb_project:
+    value: null
+weight_decay:
+    value: 0.0010403711077323333

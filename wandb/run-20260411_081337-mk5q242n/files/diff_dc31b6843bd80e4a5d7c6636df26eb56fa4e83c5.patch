@@ -1,0 +1,913 @@
+diff --git a/outputs/results_transformer_d256_l2.json b/outputs/results_transformer_d256_l2.json
+index 42d1d5a..b079652 100644
+--- a/outputs/results_transformer_d256_l2.json
++++ b/outputs/results_transformer_d256_l2.json
+@@ -1,7 +1,7 @@
+ {
+-  "encoder/task_auroc": 0.9067013888888888,
+-  "encoder/recon_cosine": 0.9985686421394349,
+-  "encoder/alpha_r2": -0.00818648338317871,
++  "encoder/task_auroc": 0.5140277777777778,
++  "encoder/recon_cosine": 0.9986185550689697,
++  "encoder/alpha_r2": 0.9996503710746765,
+   "n_folds": 5,
+   "n_samples": 300,
+   "M": 144,
+@@ -26,9 +26,9 @@
+     "batch_size": 64,
+     "max_epochs": 100,
+     "n_cv_folds": 5,
+-    "objective_task_weight": 0.5,
+-    "objective_recon_weight": 0.25,
+-    "objective_alpha_weight": 0,
++    "objective_task_weight": 0,
++    "objective_recon_weight": 0.5,
++    "objective_alpha_weight": 0.1,
+     "wandb_project": null
+   }
+ }
+\ No newline at end of file
+diff --git a/outputs/results_transformer_d256_l4.json b/outputs/results_transformer_d256_l4.json
+index a13e289..ff21fc4 100644
+--- a/outputs/results_transformer_d256_l4.json
++++ b/outputs/results_transformer_d256_l4.json
+@@ -1,6 +1,6 @@
+ {
+-  "encoder/task_auroc": 0.9075694444444444,
+-  "encoder/recon_cosine": 0.003705621336121112,
++  "encoder/task_auroc": 0.9051736111111112,
++  "encoder/recon_cosine": 0.9986557126045227,
+   "encoder/alpha_r2": -0.00818648338317871,
+   "n_folds": 5,
+   "n_samples": 300,
+@@ -19,15 +19,15 @@
+     "embed_dim": 256,
+     "hidden_dim": 256,
+     "n_hidden_layers": 4,
+-    "n_attn_heads": 2,
++    "n_attn_heads": 4,
+     "dropout": 0,
+-    "lr": 0.0001566398907142408,
+-    "weight_decay": 0.0010551679918633155,
+-    "batch_size": 32,
++    "lr": 0.0007323794558861017,
++    "weight_decay": 0.0001786672824319358,
++    "batch_size": 64,
+     "max_epochs": 100,
+     "n_cv_folds": 5,
+-    "objective_task_weight": 0.5,
+-    "objective_recon_weight": 0,
++    "objective_task_weight": 2,
++    "objective_recon_weight": 0.5,
+     "objective_alpha_weight": 0,
+     "wandb_project": null
+   }
+diff --git a/outputs/results_transformer_d512_l2.json b/outputs/results_transformer_d512_l2.json
+index 0d35dc1..017bbce 100644
+--- a/outputs/results_transformer_d512_l2.json
++++ b/outputs/results_transformer_d512_l2.json
+@@ -1,7 +1,7 @@
+ {
+-  "encoder/task_auroc": 0.9060763888888888,
+-  "encoder/recon_cosine": 0.003341669775545597,
+-  "encoder/alpha_r2": 0.9556500554084778,
++  "encoder/task_auroc": 0.9071180555555556,
++  "encoder/recon_cosine": -0.006996752601116896,
++  "encoder/alpha_r2": -0.00818648338317871,
+   "n_folds": 5,
+   "n_samples": 300,
+   "M": 144,
+@@ -19,16 +19,16 @@
+     "embed_dim": 512,
+     "hidden_dim": 256,
+     "n_hidden_layers": 2,
+-    "n_attn_heads": 4,
++    "n_attn_heads": 2,
+     "dropout": 0.2,
+-    "lr": 0.0008898725364691742,
+-    "weight_decay": 0.0009121406750905674,
+-    "batch_size": 64,
++    "lr": 0.00047373035873023254,
++    "weight_decay": 5.786411954187463e-05,
++    "batch_size": 128,
+     "max_epochs": 100,
+     "n_cv_folds": 5,
+-    "objective_task_weight": 2,
++    "objective_task_weight": 1,
+     "objective_recon_weight": 0,
+-    "objective_alpha_weight": 0.5,
++    "objective_alpha_weight": 0,
+     "wandb_project": null
+   }
+ }
+\ No newline at end of file
+diff --git a/wandb/debug-cli.user.log b/wandb/debug-cli.user.log
+index a0c6c50..468f421 100644
+--- a/wandb/debug-cli.user.log
++++ b/wandb/debug-cli.user.log
+@@ -718,3 +718,720 @@
+ 	patch_depth: 1
+ 2026-04-10 16:42:39 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=0.25 --objective_task_weight=1 --patch_depth=1
+ 2026-04-10 16:42:44 INFO Running runs: ['xke66qmz']
++2026-04-10 17:31:56 INFO Cleaning up finished run: xke66qmz
++2026-04-10 17:31:57 INFO Agent received command: run
++2026-04-10 17:31:57 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0
++	objective_recon_weight: 0.25
++	objective_task_weight: 2
++	patch_depth: 1
++2026-04-10 17:31:57 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=0.25 --objective_task_weight=2 --patch_depth=1
++2026-04-10 17:32:02 INFO Running runs: ['7u02y7dn']
++2026-04-10 17:41:08 INFO Cleaning up finished run: 12fzwf34
++2026-04-10 17:41:09 INFO Agent received command: run
++2026-04-10 17:41:09 INFO Agent starting run with config:
++	batch_size: 128
++	dropout: 0.2
++	embed_dim: 512
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.00047373035873023254
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 2
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0
++	objective_recon_weight: 0
++	objective_task_weight: 1
++	patch_depth: 1
++	weight_decay: 5.786411954187463e-05
++2026-04-10 17:41:09 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=128 --dropout=0.2 --embed_dim=512 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.00047373035873023254 --max_epochs=100 --model_name=gpt2 --n_attn_heads=2 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=0 --objective_task_weight=1 --patch_depth=1 --weight_decay=5.786411954187463e-05
++2026-04-10 17:41:14 INFO Running runs: ['5ot9gyi9']
++2026-04-10 18:20:37 INFO Cleaning up finished run: 7u02y7dn
++2026-04-10 18:20:38 INFO Agent received command: run
++2026-04-10 18:20:38 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0
++	objective_recon_weight: 0.5
++	objective_task_weight: 0
++	patch_depth: 1
++2026-04-10 18:20:38 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=0.5 --objective_task_weight=0 --patch_depth=1
++2026-04-10 18:20:43 INFO Running runs: ['kiwsltbm']
++2026-04-10 19:09:16 INFO Cleaning up finished run: kiwsltbm
++2026-04-10 19:09:16 INFO Agent received command: run
++2026-04-10 19:09:16 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0
++	objective_recon_weight: 0.5
++	objective_task_weight: 0.5
++	patch_depth: 1
++2026-04-10 19:09:16 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=0.5 --objective_task_weight=0.5 --patch_depth=1
++2026-04-10 19:09:21 INFO Running runs: ['vya3qik3']
++2026-04-10 19:27:05 INFO Cleaning up finished run: 5ot9gyi9
++2026-04-10 19:27:06 INFO Agent received command: run
++2026-04-10 19:27:06 INFO Agent starting run with config:
++	batch_size: 128
++	dropout: 0.3
++	embed_dim: 64
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.0030378632696534424
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0
++	objective_recon_weight: 0.5
++	objective_task_weight: 2
++	patch_depth: 1
++	weight_decay: 4.519937353367701e-05
++2026-04-10 19:27:06 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=128 --dropout=0.3 --embed_dim=64 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.0030378632696534424 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=0.5 --objective_task_weight=2 --patch_depth=1 --weight_decay=4.519937353367701e-05
++2026-04-10 19:27:11 INFO Running runs: ['4of404wv']
++2026-04-10 19:44:09 INFO Cleaning up finished run: 4of404wv
++2026-04-10 19:44:10 INFO Agent received command: run
++2026-04-10 19:44:10 INFO Agent starting run with config:
++	batch_size: 32
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.00017937225871987827
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 4
++	objective_alpha_weight: 0.5
++	objective_recon_weight: 0
++	objective_task_weight: 1
++	patch_depth: 1
++	weight_decay: 3.2354614692028644e-05
++2026-04-10 19:44:10 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=32 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.00017937225871987827 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=4 --objective_alpha_weight=0.5 --objective_recon_weight=0 --objective_task_weight=1 --patch_depth=1 --weight_decay=3.2354614692028644e-05
++2026-04-10 19:44:15 INFO Running runs: ['rfbsmnzw']
++2026-04-10 19:54:38 INFO Cleaning up finished run: vya3qik3
++2026-04-10 19:54:40 INFO Agent received command: run
++2026-04-10 19:54:40 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0
++	objective_recon_weight: 0.5
++	objective_task_weight: 1
++	patch_depth: 1
++2026-04-10 19:54:40 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=0.5 --objective_task_weight=1 --patch_depth=1
++2026-04-10 19:54:45 INFO Running runs: ['uj7y55vw']
++2026-04-10 20:40:00 INFO Cleaning up finished run: uj7y55vw
++2026-04-10 20:40:01 INFO Agent received command: run
++2026-04-10 20:40:01 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0
++	objective_recon_weight: 0.5
++	objective_task_weight: 2
++	patch_depth: 1
++2026-04-10 20:40:01 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=0.5 --objective_task_weight=2 --patch_depth=1
++2026-04-10 20:40:06 INFO Running runs: ['r1kan8wi']
++2026-04-10 21:11:59 INFO Cleaning up finished run: rfbsmnzw
++2026-04-10 21:12:00 INFO Agent received command: run
++2026-04-10 21:12:00 INFO Agent starting run with config:
++	batch_size: 32
++	dropout: 0
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 5.197339785165907e-05
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 2
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.5
++	objective_recon_weight: 0
++	objective_task_weight: 2
++	patch_depth: 1
++	weight_decay: 0.00013057500031447706
++2026-04-10 21:12:00 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=32 --dropout=0 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=5.197339785165907e-05 --max_epochs=100 --model_name=gpt2 --n_attn_heads=2 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.5 --objective_recon_weight=0 --objective_task_weight=2 --patch_depth=1 --weight_decay=0.00013057500031447706
++2026-04-10 21:12:05 INFO Running runs: ['kc2hbpns']
++2026-04-10 21:25:07 INFO Cleaning up finished run: r1kan8wi
++2026-04-10 21:25:08 INFO Agent received command: run
++2026-04-10 21:25:08 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0
++	objective_recon_weight: 1
++	objective_task_weight: 0
++	patch_depth: 1
++2026-04-10 21:25:08 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=1 --objective_task_weight=0 --patch_depth=1
++2026-04-10 21:25:13 INFO Running runs: ['fim7hx7d']
++2026-04-10 21:38:42 INFO Cleaning up finished run: kc2hbpns
++2026-04-10 21:38:43 INFO Agent received command: run
++2026-04-10 21:38:43 INFO Agent starting run with config:
++	batch_size: 128
++	dropout: 0.3
++	embed_dim: 512
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.003635673192904108
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 2
++	n_cv_folds: 5
++	n_hidden_layers: 4
++	objective_alpha_weight: 0.5
++	objective_recon_weight: 0
++	objective_task_weight: 1
++	patch_depth: 1
++	weight_decay: 0.00022071125675789403
++2026-04-10 21:38:43 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=128 --dropout=0.3 --embed_dim=512 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.003635673192904108 --max_epochs=100 --model_name=gpt2 --n_attn_heads=2 --n_cv_folds=5 --n_hidden_layers=4 --objective_alpha_weight=0.5 --objective_recon_weight=0 --objective_task_weight=1 --patch_depth=1 --weight_decay=0.00022071125675789403
++2026-04-10 21:38:48 INFO Running runs: ['ljmvyn16']
++2026-04-10 22:13:07 INFO Cleaning up finished run: fim7hx7d
++2026-04-10 22:13:08 INFO Agent received command: run
++2026-04-10 22:13:08 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0
++	objective_recon_weight: 1
++	objective_task_weight: 0.5
++	patch_depth: 1
++2026-04-10 22:13:08 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=1 --objective_task_weight=0.5 --patch_depth=1
++2026-04-10 22:13:13 INFO Running runs: ['jetgwxy9']
++2026-04-10 23:02:03 INFO Cleaning up finished run: jetgwxy9
++2026-04-10 23:02:04 INFO Agent received command: run
++2026-04-10 23:02:04 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0
++	objective_recon_weight: 1
++	objective_task_weight: 1
++	patch_depth: 1
++2026-04-10 23:02:04 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=1 --objective_task_weight=1 --patch_depth=1
++2026-04-10 23:02:09 INFO Running runs: ['hxrsnld8']
++2026-04-10 23:50:54 INFO Cleaning up finished run: hxrsnld8
++2026-04-10 23:50:55 INFO Agent received command: run
++2026-04-10 23:50:55 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0
++	objective_recon_weight: 1
++	objective_task_weight: 2
++	patch_depth: 1
++2026-04-10 23:50:55 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0 --objective_recon_weight=1 --objective_task_weight=2 --patch_depth=1
++2026-04-10 23:51:00 INFO Running runs: ['ll71ieqr']
++2026-04-11 00:39:54 INFO Cleaning up finished run: ll71ieqr
++2026-04-11 00:39:55 INFO Agent received command: run
++2026-04-11 00:39:55 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 0
++	objective_task_weight: 0
++	patch_depth: 1
++2026-04-11 00:39:55 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.1 --objective_recon_weight=0 --objective_task_weight=0 --patch_depth=1
++2026-04-11 00:40:00 INFO Running runs: ['zktmuair']
++2026-04-11 01:06:20 INFO Cleaning up finished run: ljmvyn16
++2026-04-11 01:06:21 INFO Agent received command: run
++2026-04-11 01:06:21 INFO Agent starting run with config:
++	batch_size: 128
++	dropout: 0
++	embed_dim: 512
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.002220830635174066
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 8
++	n_cv_folds: 5
++	n_hidden_layers: 4
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 0
++	objective_task_weight: 2
++	patch_depth: 1
++	weight_decay: 0.0014533818482443475
++2026-04-11 01:06:21 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=128 --dropout=0 --embed_dim=512 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.002220830635174066 --max_epochs=100 --model_name=gpt2 --n_attn_heads=8 --n_cv_folds=5 --n_hidden_layers=4 --objective_alpha_weight=0.1 --objective_recon_weight=0 --objective_task_weight=2 --patch_depth=1 --weight_decay=0.0014533818482443475
++2026-04-11 01:06:26 INFO Running runs: ['zxgh81vx']
++2026-04-11 01:30:22 INFO Cleaning up finished run: zktmuair
++2026-04-11 01:30:23 INFO Agent received command: run
++2026-04-11 01:30:23 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 0
++	objective_task_weight: 0.5
++	patch_depth: 1
++2026-04-11 01:30:23 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.1 --objective_recon_weight=0 --objective_task_weight=0.5 --patch_depth=1
++2026-04-11 01:30:28 INFO Running runs: ['x9v8azgj']
++2026-04-11 02:24:53 INFO Cleaning up finished run: x9v8azgj
++2026-04-11 02:24:53 INFO Agent received command: run
++2026-04-11 02:24:53 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 0
++	objective_task_weight: 1
++	patch_depth: 1
++2026-04-11 02:24:53 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.1 --objective_recon_weight=0 --objective_task_weight=1 --patch_depth=1
++2026-04-11 02:24:58 INFO Running runs: ['qc6sidcq']
++2026-04-11 03:21:02 INFO Cleaning up finished run: qc6sidcq
++2026-04-11 03:21:03 INFO Agent received command: run
++2026-04-11 03:21:03 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 0
++	objective_task_weight: 2
++	patch_depth: 1
++2026-04-11 03:21:03 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.1 --objective_recon_weight=0 --objective_task_weight=2 --patch_depth=1
++2026-04-11 03:21:08 INFO Running runs: ['n1jhcbet']
++2026-04-11 03:31:30 INFO Cleaning up finished run: zxgh81vx
++2026-04-11 03:31:32 INFO Agent received command: run
++2026-04-11 03:31:32 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.0007323794558861017
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 4
++	objective_alpha_weight: 0
++	objective_recon_weight: 0.5
++	objective_task_weight: 2
++	patch_depth: 1
++	weight_decay: 0.0001786672824319358
++2026-04-11 03:31:32 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.0007323794558861017 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=4 --objective_alpha_weight=0 --objective_recon_weight=0.5 --objective_task_weight=2 --patch_depth=1 --weight_decay=0.0001786672824319358
++2026-04-11 03:31:37 INFO Running runs: ['wv9p63pm']
++2026-04-11 04:14:04 INFO Cleaning up finished run: n1jhcbet
++2026-04-11 04:14:05 INFO Agent received command: run
++2026-04-11 04:14:05 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 0.25
++	objective_task_weight: 0
++	patch_depth: 1
++2026-04-11 04:14:05 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.1 --objective_recon_weight=0.25 --objective_task_weight=0 --patch_depth=1
++2026-04-11 04:14:10 INFO Running runs: ['leit2etj']
++2026-04-11 04:23:20 INFO Cleaning up finished run: wv9p63pm
++2026-04-11 04:23:21 INFO Agent received command: run
++2026-04-11 04:23:21 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.2
++	embed_dim: 512
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.0003022805182887929
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 3
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 1
++	objective_task_weight: 1
++	patch_depth: 1
++	weight_decay: 0.0010403711077323333
++2026-04-11 04:23:21 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.2 --embed_dim=512 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.0003022805182887929 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=3 --objective_alpha_weight=0.1 --objective_recon_weight=1 --objective_task_weight=1 --patch_depth=1 --weight_decay=0.0010403711077323333
++2026-04-11 04:23:26 INFO Running runs: ['cjhj6507']
++2026-04-11 04:54:27 ERROR Error executing GraphQL.
++Traceback (most recent call last):
++  File "/home/user/.local/lib/python3.12/site-packages/wandb/sdk/internal/internal_api.py", line 397, in execute
++    return self.client.execute(*args, **kwargs)  # type: ignore
++           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++  File "/home/user/.local/lib/python3.12/site-packages/wandb/vendor/gql-0.2.0/wandb_gql/client.py", line 52, in execute
++    result = self._get_result(document, *args, **kwargs)
++             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++  File "/home/user/.local/lib/python3.12/site-packages/wandb/vendor/gql-0.2.0/wandb_gql/client.py", line 60, in _get_result
++    return self.transport.execute(document, *args, **kwargs)
++           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++  File "/home/user/.local/lib/python3.12/site-packages/wandb/sdk/lib/gql_request.py", line 71, in execute
++    request.raise_for_status()
++  File "/usr/lib/python3/dist-packages/requests/models.py", line 1021, in raise_for_status
++    raise HTTPError(http_error_msg, response=self)
++requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://api.wandb.ai/graphql
++2026-04-11 04:54:27 ERROR Error executing GraphQL.
++Traceback (most recent call last):
++  File "/home/user/.local/lib/python3.12/site-packages/wandb/sdk/internal/internal_api.py", line 397, in execute
++    return self.client.execute(*args, **kwargs)  # type: ignore
++           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++  File "/home/user/.local/lib/python3.12/site-packages/wandb/vendor/gql-0.2.0/wandb_gql/client.py", line 52, in execute
++    result = self._get_result(document, *args, **kwargs)
++             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++  File "/home/user/.local/lib/python3.12/site-packages/wandb/vendor/gql-0.2.0/wandb_gql/client.py", line 60, in _get_result
++    return self.transport.execute(document, *args, **kwargs)
++           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++  File "/home/user/.local/lib/python3.12/site-packages/wandb/sdk/lib/gql_request.py", line 71, in execute
++    request.raise_for_status()
++  File "/usr/lib/python3/dist-packages/requests/models.py", line 1021, in raise_for_status
++    raise HTTPError(http_error_msg, response=self)
++requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://api.wandb.ai/graphql
++2026-04-11 05:04:02 INFO Cleaning up finished run: leit2etj
++2026-04-11 05:04:03 INFO Agent received command: run
++2026-04-11 05:04:03 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 0.25
++	objective_task_weight: 0.5
++	patch_depth: 1
++2026-04-11 05:04:03 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.1 --objective_recon_weight=0.25 --objective_task_weight=0.5 --patch_depth=1
++2026-04-11 05:04:08 INFO Running runs: ['vtvqf44a']
++2026-04-11 05:53:51 INFO Cleaning up finished run: vtvqf44a
++2026-04-11 05:53:52 INFO Agent received command: run
++2026-04-11 05:53:52 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 0.25
++	objective_task_weight: 1
++	patch_depth: 1
++2026-04-11 05:53:52 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.1 --objective_recon_weight=0.25 --objective_task_weight=1 --patch_depth=1
++2026-04-11 05:53:57 INFO Running runs: ['adc7ufwo']
++2026-04-11 06:43:15 INFO Cleaning up finished run: adc7ufwo
++2026-04-11 06:43:16 INFO Agent received command: run
++2026-04-11 06:43:16 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 0.25
++	objective_task_weight: 2
++	patch_depth: 1
++2026-04-11 06:43:16 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.1 --objective_recon_weight=0.25 --objective_task_weight=2 --patch_depth=1
++2026-04-11 06:43:21 INFO Running runs: ['600xl4iu']
++2026-04-11 07:01:39 INFO Cleaning up finished run: cjhj6507
++2026-04-11 07:01:40 INFO Agent received command: run
++2026-04-11 07:01:40 INFO Agent starting run with config:
++	batch_size: 32
++	dropout: 0
++	embed_dim: 128
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.00029725313394713207
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 3
++	objective_alpha_weight: 0
++	objective_recon_weight: 0
++	objective_task_weight: 2
++	patch_depth: 1
++	weight_decay: 2.6519001230017293e-05
++2026-04-11 07:01:40 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=32 --dropout=0 --embed_dim=128 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.00029725313394713207 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=3 --objective_alpha_weight=0 --objective_recon_weight=0 --objective_task_weight=2 --patch_depth=1 --weight_decay=2.6519001230017293e-05
++2026-04-11 07:01:45 INFO Running runs: ['q25gg8ex']
++2026-04-11 07:17:29 INFO Cleaning up finished run: q25gg8ex
++2026-04-11 07:17:31 INFO Agent received command: run
++2026-04-11 07:17:31 INFO Agent starting run with config:
++	batch_size: 32
++	dropout: 0.2
++	embed_dim: 64
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.0019314504384024525
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 8
++	n_cv_folds: 5
++	n_hidden_layers: 1
++	objective_alpha_weight: 0.5
++	objective_recon_weight: 0.5
++	objective_task_weight: 0.5
++	patch_depth: 1
++	weight_decay: 0.0023391611037672467
++2026-04-11 07:17:31 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=32 --dropout=0.2 --embed_dim=64 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.0019314504384024525 --max_epochs=100 --model_name=gpt2 --n_attn_heads=8 --n_cv_folds=5 --n_hidden_layers=1 --objective_alpha_weight=0.5 --objective_recon_weight=0.5 --objective_task_weight=0.5 --patch_depth=1 --weight_decay=0.0023391611037672467
++2026-04-11 07:17:36 INFO Running runs: ['ejwj7w4e']
++2026-04-11 07:28:35 INFO Cleaning up finished run: 600xl4iu
++2026-04-11 07:28:36 INFO Agent received command: run
++2026-04-11 07:28:36 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 0.5
++	objective_task_weight: 0
++	patch_depth: 1
++2026-04-11 07:28:36 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.1 --objective_recon_weight=0.5 --objective_task_weight=0 --patch_depth=1
++2026-04-11 07:28:41 INFO Running runs: ['yq3voars']
++2026-04-11 07:30:55 INFO Cleaning up finished run: ejwj7w4e
++2026-04-11 07:30:56 INFO Agent received command: run
++2026-04-11 07:30:56 INFO Agent starting run with config:
++	batch_size: 128
++	dropout: 0
++	embed_dim: 128
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.00013829952679002717
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 2
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.5
++	objective_recon_weight: 0
++	objective_task_weight: 1
++	patch_depth: 1
++	weight_decay: 0.004425627078068696
++2026-04-11 07:30:56 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=128 --dropout=0 --embed_dim=128 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.00013829952679002717 --max_epochs=100 --model_name=gpt2 --n_attn_heads=2 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.5 --objective_recon_weight=0 --objective_task_weight=1 --patch_depth=1 --weight_decay=0.004425627078068696
++2026-04-11 07:31:01 INFO Running runs: ['5ay14y6o']
++2026-04-11 07:41:57 INFO Cleaning up finished run: 5ay14y6o
++2026-04-11 07:41:58 INFO Agent received command: run
++2026-04-11 07:41:58 INFO Agent starting run with config:
++	batch_size: 128
++	dropout: 0.2
++	embed_dim: 64
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.002349750974012525
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.5
++	objective_recon_weight: 1
++	objective_task_weight: 2
++	patch_depth: 1
++	weight_decay: 1.906862746691413e-05
++2026-04-11 07:41:58 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=128 --dropout=0.2 --embed_dim=64 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.002349750974012525 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.5 --objective_recon_weight=1 --objective_task_weight=2 --patch_depth=1 --weight_decay=1.906862746691413e-05
++2026-04-11 07:42:03 INFO Running runs: ['bei6v08f']
++2026-04-11 07:57:58 INFO Cleaning up finished run: bei6v08f
++2026-04-11 07:57:59 INFO Agent received command: run
++2026-04-11 07:57:59 INFO Agent starting run with config:
++	batch_size: 32
++	dropout: 0.1
++	embed_dim: 128
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.0001611591229109636
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 3
++	objective_alpha_weight: 0.5
++	objective_recon_weight: 0
++	objective_task_weight: 1
++	patch_depth: 1
++	weight_decay: 0.0012288300915448646
++2026-04-11 07:57:59 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=32 --dropout=0.1 --embed_dim=128 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.0001611591229109636 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=3 --objective_alpha_weight=0.5 --objective_recon_weight=0 --objective_task_weight=1 --patch_depth=1 --weight_decay=0.0012288300915448646
++2026-04-11 07:58:04 INFO Running runs: ['06ra4e1p']
++2026-04-11 08:13:24 INFO Cleaning up finished run: yq3voars
++2026-04-11 08:13:25 INFO Agent received command: run
++2026-04-11 08:13:25 INFO Agent starting run with config:
++	batch_size: 64
++	dropout: 0.1
++	embed_dim: 256
++	encoder_type: transformer
++	heads_per_patch: 1
++	hidden_dim: 256
++	lr: 0.001
++	max_epochs: 100
++	model_name: gpt2
++	n_attn_heads: 4
++	n_cv_folds: 5
++	n_hidden_layers: 2
++	objective_alpha_weight: 0.1
++	objective_recon_weight: 0.5
++	objective_task_weight: 0.5
++	patch_depth: 1
++2026-04-11 08:13:25 INFO About to run command: /usr/bin/env python experiments/train_encoder.py --batch_size=64 --dropout=0.1 --embed_dim=256 --encoder_type=transformer --heads_per_patch=1 --hidden_dim=256 --lr=0.001 --max_epochs=100 --model_name=gpt2 --n_attn_heads=4 --n_cv_folds=5 --n_hidden_layers=2 --objective_alpha_weight=0.1 --objective_recon_weight=0.5 --objective_task_weight=0.5 --patch_depth=1
++2026-04-11 08:13:30 INFO Running runs: ['mk5q242n']
+diff --git a/wandb/debug-internal.log b/wandb/debug-internal.log
+index 66eb842..f5b25fd 120000
+--- a/wandb/debug-internal.log
++++ b/wandb/debug-internal.log
+@@ -1 +1 @@
+-run-20260410_164252-xke66qmz/logs/debug-internal.log
+\ No newline at end of file
++run-20260411_081337-mk5q242n/logs/debug-internal.log
+\ No newline at end of file
+diff --git a/wandb/debug.log b/wandb/debug.log
+index b10fef2..a0eab39 120000
+--- a/wandb/debug.log
++++ b/wandb/debug.log
+@@ -1 +1 @@
+-run-20260410_164252-xke66qmz/logs/debug.log
+\ No newline at end of file
++run-20260411_081337-mk5q242n/logs/debug.log
+\ No newline at end of file
+diff --git a/wandb/latest-run b/wandb/latest-run
+index 6ee3b32..4079f10 120000
+--- a/wandb/latest-run
++++ b/wandb/latest-run
+@@ -1 +1 @@
+-run-20260410_164252-xke66qmz
+\ No newline at end of file
++run-20260411_081337-mk5q242n
+\ No newline at end of file
+diff --git a/wandb/run-20260410_161723-12fzwf34/files/output.log b/wandb/run-20260410_161723-12fzwf34/files/output.log
+index dc975cf..11ffa1c 100644
+--- a/wandb/run-20260410_161723-12fzwf34/files/output.log
++++ b/wandb/run-20260410_161723-12fzwf34/files/output.log
+@@ -17,3 +17,21 @@ Training transformer encoder (embed_dim=256, depth=4)...
+ 2026-04-10 16:51:07,493  INFO    Fold 3/5 — train=240, val=60
+ /home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+   warnings.warn(
++2026-04-10 17:07:46,747  INFO      AUROC=0.890  cos=0.998  R²=-0.025
++2026-04-10 17:07:46,749  INFO    Fold 4/5 — train=240, val=60
++/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
++  warnings.warn(
++2026-04-10 17:24:27,309  INFO      AUROC=0.907  cos=0.998  R²=-0.013
++2026-04-10 17:24:27,310  INFO    Fold 5/5 — train=240, val=60
++/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
++  warnings.warn(
++2026-04-10 17:41:02,168  INFO      AUROC=0.908  cos=0.998  R²=-0.000
++2026-04-10 17:41:02,221  INFO
++============================================================
++2026-04-10 17:41:02,222  INFO  ENCODER TRAINING — RESULTS
++2026-04-10 17:41:02,222  INFO    Encoder type : transformer
++2026-04-10 17:41:02,222  INFO    Elapsed      : 5018.1s
++2026-04-10 17:41:02,222  INFO    Task AUROC   : 0.908  (target >0.70)
++2026-04-10 17:41:02,222  INFO    Recon cosine : 0.998  (target >0.60)
++2026-04-10 17:41:02,223  INFO    Alpha R²     : -0.008  (target >0.80)
++2026-04-10 17:41:02,223  INFO  ============================================================
+diff --git a/wandb/run-20260410_161723-12fzwf34/run-12fzwf34.wandb b/wandb/run-20260410_161723-12fzwf34/run-12fzwf34.wandb
+index 7d2883b..38db4ae 100644
+Binary files a/wandb/run-20260410_161723-12fzwf34/run-12fzwf34.wandb and b/wandb/run-20260410_161723-12fzwf34/run-12fzwf34.wandb differ
+diff --git a/wandb/run-20260410_164252-xke66qmz/files/output.log b/wandb/run-20260410_164252-xke66qmz/files/output.log
+index aa432a0..3aa7279 100644
+--- a/wandb/run-20260410_164252-xke66qmz/files/output.log
++++ b/wandb/run-20260410_164252-xke66qmz/files/output.log
+@@ -17,3 +17,21 @@ Training transformer encoder (embed_dim=256, depth=2)...
+ 2026-04-10 17:02:30,025  INFO    Fold 3/5 — train=240, val=60
+ /home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+   warnings.warn(
++2026-04-10 17:12:18,437  INFO      AUROC=0.893  cos=0.999  R²=-0.025
++2026-04-10 17:12:18,439  INFO    Fold 4/5 — train=240, val=60
++/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
++  warnings.warn(
++2026-04-10 17:22:08,976  INFO      AUROC=0.903  cos=0.999  R²=-0.013
++2026-04-10 17:22:08,976  INFO    Fold 5/5 — train=240, val=60
++/home/user/miniconda3/envs/opence/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
++  warnings.warn(
++2026-04-10 17:31:52,658  INFO      AUROC=0.907  cos=0.999  R²=-0.000
++2026-04-10 17:31:52,719  INFO
++============================================================
++2026-04-10 17:31:52,720  INFO  ENCODER TRAINING — RESULTS
++2026-04-10 17:31:52,720  INFO    Encoder type : transformer
++2026-04-10 17:31:52,721  INFO    Elapsed      : 2938.9s
++2026-04-10 17:31:52,721  INFO    Task AUROC   : 0.907  (target >0.70)
++2026-04-10 17:31:52,721  INFO    Recon cosine : 0.999  (target >0.60)
++2026-04-10 17:31:52,721  INFO    Alpha R²     : -0.008  (target >0.80)
++2026-04-10 17:31:52,721  INFO  ============================================================
+diff --git a/wandb/run-20260410_164252-xke66qmz/run-xke66qmz.wandb b/wandb/run-20260410_164252-xke66qmz/run-xke66qmz.wandb
+index ce7c724..0d1d709 100644
+Binary files a/wandb/run-20260410_164252-xke66qmz/run-xke66qmz.wandb and b/wandb/run-20260410_164252-xke66qmz/run-xke66qmz.wandb differ

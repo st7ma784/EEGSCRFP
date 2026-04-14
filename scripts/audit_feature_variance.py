@@ -162,6 +162,12 @@ def print_report(pathway_feats, cka_feats, alpha_values, logger):
         k = min(X.shape[0] - 1, X.shape[1])
         if k < 1:
             return 1.0
+        if not np.isfinite(X).all():
+            col_means = np.nanmean(X, axis=0)
+            col_means = np.where(np.isfinite(col_means), col_means, 0.0)
+            bad = ~np.isfinite(X)
+            X = X.copy()
+            X[bad] = np.take(col_means, np.where(bad)[1])
         pca = PCA(n_components=k)
         pca.fit(X)
         lam = pca.explained_variance_
